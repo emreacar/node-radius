@@ -1,0 +1,28 @@
+{
+  "name": "service-radius",
+  "version": "1.0.0",
+  "description": "NodeJS Radius Service For Nas Communication (Priority of Mikrotik) ",
+  "main": "index.js",
+  "scripts": {
+    "serve": "DEBUG=app,error cross-env NODE_ENV=development nodemon index.js -x babel-node -e js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "radius",
+    "radius-node",
+    "radius-nodejs",
+    "mikrotik-radius"
+  ],
+  "author": "Emre Acar - www.emreacar.com.tr",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.6",
+    "@babel/node": "^7.8.7",
+    "@babel/preset-env": "^7.9.6",
+    "cross-env": "^7.0.2",
+    "eslint": "^6.8.0",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.3"
+  }
+}
