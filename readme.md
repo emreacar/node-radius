@@ -1,1 +1,36 @@
-# On Development - Dont Use before see full documented readme
+# A Framework for Radius Servers
+
+>**_this project is still under development, it is highly recommended not to use it in the production environment._**
+
+###### **Author:** Emre Acar <info@emreacar.com.tr>
+###### **Co-Author:** Furkan ACAR <furkan@acar.digital>
+
+Node-radius is a framework designed for nodeJS and written in javascript, specially designed for radius servers.
+
+Encodes and decodes nas packets using # rfc-2865 protocol standards. It supports importing Radius Dictionaries to meet all user needs.
+
+
+### Some Features (For now...)
+- Block requests from unspecified NAS devices
+- It can receive requests from more than one NAS device and separate port definition can be made for each device.
+- Allows you to configure your own middleware rules for your more advanced authorization rules.
+
+### Usage Examples
+
+```javascript
+import Radius from 'node-radius'
+
+const server = new Radius()
+
+server.on('accounting', function(req, res) {
+  /**
+    * You can do its operations in this section.
+    */
+
+  res.send()
+})
+
+server.start()
+```
+
+> ##### More usage examples and details about the use of the response object will be added later in the project.
