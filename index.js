@@ -1,28 +1,13 @@
-import { createSocket } from 'dgram'
+import Radius from './lib/node-radius'
 
-const sockets = [
-  { type: 'auth', port: 1812 },
-  { type: 'acc', port: 1813 }
-]
+const server = new Radius()
 
-function startSocket({ type = 'auth', port = 1812 } = {}) {
-  const server = createSocket('udp4')
+server.on('accounting', function(req, res) {
+  console.log(req.data)
+})
 
-  server.on('error', (err) => {
-    console.log(`error(${type}):\n${err.stack}`)
-    server.close()
-  })
+server.on('authorization', function(req, res) {
+  console.log(req.data)
+})
 
-  server.on('message', (msg, info) => {
-    console.log(`coming(${type}):${msg} from ${info.address}:${info.port}`)
-  })
-
-  server.on('listening', () => {
-    const address = server.address()
-    console.log(`server listening(${type}): ${address.address}:${address.port}`)
-  })
-
-  server.bind(port)
-}
-
-sockets.forEach(socket => startSocket(socket))
+server.start()
