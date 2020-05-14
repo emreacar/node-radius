@@ -9,17 +9,9 @@ const clients = [
 
 server.addClient(clients)
 
-server.use((req, res, next) => {
-  console.log(req.attr.UserName)
-  console.log(req.attr.UserPassword2)
-
-  next()
-})
-
-
-
 server.on('request', function(req, res) {
-  res.end()
+  res.add('Framed-IP-Address', '192.168.1.1')
+  res.send()
 })
 
 server.on('error', function(error) {
