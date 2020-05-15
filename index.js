@@ -9,8 +9,13 @@ const clients = [
 
 server.addClient(clients)
 
-server.on('request', function(req, res) {
+server.use((req,res, next) => {
   res.add('Framed-IP-Address', '192.168.1.1')
+  res.accept()
+  next()
+})
+
+server.on('request', function(req, res, next) {
   res.send()
 })
 
