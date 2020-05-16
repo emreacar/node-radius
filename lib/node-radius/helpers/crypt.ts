@@ -1,22 +1,18 @@
-import crypto from 'crypto'
+import crypto from 'crypto';
 
-class Crypt {
-
+export default class Crypt {
   static md5(secret, chunk) {
-    const hash = crypto.createHash('md5')
+    const hash = crypto.createHash('md5');
 
-    hash.update(secret)
-    hash.update(chunk)
+    hash.update(secret);
+    hash.update(chunk);
 
-    return hash.digest()
+    return hash.digest();
   }
 
   static decode(value, secret, Authenticator) {
-    if (value.length < 16 ||
-        value.length > 128 ||
-        value.length % 16 !== 0
-    ) {
-      throw new Error('Wrong Length for Encrypted Value')
+    if (value.length < 16 || value.length > 128 || value.length % 16 !== 0) {
+      throw new Error('Wrong Length for Encrypted Value');
     }
 
     /**
@@ -36,29 +32,27 @@ class Crypt {
       concatenation.
      */
 
-    const p = Buffer.alloc(value.length)
-    const c = Buffer.from(value)
+    const p = Buffer.alloc(value.length);
+    const c = Buffer.from(value);
 
     for (let i = 0; i < value.length; i += 16) {
-      const chunk = (i === 0) ? Authenticator : c.slice(i - 16, i)
-      const b = Crypt.md5(secret, chunk)
+      const chunk = i === 0 ? Authenticator : c.slice(i - 16, i);
+      const b = Crypt.md5(secret, chunk);
 
       for (let x = 0; x < 16; ++x) {
-        p[i + x] = c[i + x] ^ b[x]
+        p[i + x] = c[i + x] ^ b[x];
       }
     }
 
-    let l = p.length
+    let l = p.length;
 
     while (l && p[l - 1] === 0) {
       l--;
     }
-    return p.slice(0, l)
+    return p.slice(0, l);
   }
 
   static encode(value) {
-    return value
+    return value;
   }
 }
-
-export default Crypt
