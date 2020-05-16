@@ -4,23 +4,20 @@ const server = new Radius()
 
 const clients = [
   { ip: '127.0.0.1', secret: 'secret', name: 'NAS-1' },
-  { ip: '192.168.1.2', secret: 'secret', name: 'NAS-2' }
+  { ip: '192.168.1.2', secret: 'secret', name: 'NAS-2' },
+  { ip: '', secret: '', name: 'NAS-2' },
 ]
 
 server.addClient(clients)
 
-server.use((req,res, next) => {
-  res.add('Framed-IP-Address', '192.168.1.1')
-  res.accept()
-  next()
-})
-
-server.on('request', function(req, res, next) {
-  res.send()
-})
-
-server.on('error', function(error) {
-  console.log(error)
+server.use((req, res, next) => {
+  if(req.data.UserName === '***') {
+    console.log(req.code, req.data.UserName, 'ACEPPTED')
+    res.accept(true)
+  } else {
+    console.log(req.code, req.data.UserName, 'rejected')
+    res.reject(true)
+  }
 })
 
 server.start()
