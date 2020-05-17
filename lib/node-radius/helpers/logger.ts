@@ -10,3 +10,9 @@ import logger from 'debug';
 export const error = logger('error');
 export const info = logger('info');
 export const debug = logger('debug');
+
+export default {
+  error,
+  info,
+  debug,
+};

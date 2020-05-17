@@ -60,7 +60,7 @@ const importContent = dContent => {
   }
 };
 
-const addAttr: Helpers.SpreadableFn = (vendor, attr, id, type, ...params) => {
+const addAttr: SpreadableFn = (vendor, attr, id, type, ...params) => {
   id = Number(id);
 
   if (!Number.isInteger(id)) {
@@ -73,7 +73,7 @@ const addAttr: Helpers.SpreadableFn = (vendor, attr, id, type, ...params) => {
   info('Dictionary Entry Added', id, attr);
 };
 
-const addVendor: Helpers.SpreadableFn = (name, id, ...params) => {};
+const addVendor: SpreadableFn = (name, id, ...params) => {};
 
 export default {
   get,
