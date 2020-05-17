@@ -1,21 +1,25 @@
 {
   "compilerOptions": {
-    "typeRoots": ["node_modules/@types", "@types"],
-    "outDir": "dist",
-    "target": "ES6",
-    "lib": ["esnext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
+    "outDir": "./dist",
+    "module": "commonjs",
+    "target": "es2019",
+    "lib": ["es2019", "es2020.bigint", "es2020.string", "es2020.symbol.wellknown"],
+
+    "strict": false,
+
+    "sourceMap": true,
+    "removeComments": true,
+    "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
     "isolatedModules": true,
-    "baseUrl": "."
+    "moduleResolution": "node"
   },
-  "exclude": ["node_modules", "dist"],
-  "include": ["**/*.ts"]
+
+  "typeRoots": ["node_modules/@types", "@types"],
+
+  "exclude": ["node_modules", "dist"]
 }
