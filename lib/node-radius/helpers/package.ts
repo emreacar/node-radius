@@ -146,11 +146,13 @@ export default class Package {
     responseBuffer = responseBuffer.slice(0, packageLength);
 
     /** restore Authentication */
-    let hash = crypto.createHash('md5');
-    hash.update(responseBuffer);
-    hash.update(Client.secret);
+    const hash = crypto
+      .createHash('md5')
+      .update(responseBuffer)
+      .update(Client.secret)
+      .digest('binary' as any);
 
-    const AuthenticationBuffer = Buffer.from(hash.digest('binary'), 'binary');
+    const AuthenticationBuffer = Buffer.from(hash, 'binary');
 
     AuthenticationBuffer.copy(responseBuffer, authenticator_offset);
 

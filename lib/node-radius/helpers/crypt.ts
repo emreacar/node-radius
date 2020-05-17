@@ -10,7 +10,7 @@ export default class Crypt {
     return hash.digest();
   }
 
-  static decode(value, secret, Authenticator) {
+  static decode(value: Buffer, secret: String, Authenticator: Buffer) {
     if (value.length < 16 || value.length > 128 || value.length % 16 !== 0) {
       throw new Error('Wrong Length for Encrypted Value');
     }

@@ -52,25 +52,14 @@ export default class Radius {
   }
   /**
    *
-   * @param {Object|Array} clients
-   * @description Parameter must be a single client object or multiple array includes client Object
-   * @model { ip: String|required, secret: String|required, name: String|optional }
+   * @param {Radius.Client} client
+   * @model { ip: string, secret: string, name?: string }
    * @example addClient({ip: 192.168.1.1, secret: 'secret'})
-   * @example addClient([{client}, {client} ...])
    */
-  addClient(clients) {
-    if (Array.isArray(clients)) {
-      for (let client of clients) {
-        this._clients.set(client.ip, client);
-      }
-    } else if (typeof clients !== 'object') {
-      this._clients.set(clients.ip, clients);
-    } else {
-      eventEmitter.emit(
-        'error',
-        'Client Parameter must be an array or an object including client model'
-      );
-    }
+  addClient(...clients: Radius.ClientRegistry[]) {
+    clients.forEach(client => {
+      this._clients.set(client.ip, client);
+    });
   }
 
   addListener(eventName: string, callback: SpreadableFn) {

@@ -3,7 +3,7 @@ import path from 'path';
 import { debug, info } from './logger';
 
 const Dict = new Map();
-const Vendor = new Map();
+// const Vendor = new Map();
 
 const Locations = [path.normalize(__dirname + '/../dictionary')];
 

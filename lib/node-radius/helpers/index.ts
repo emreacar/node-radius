@@ -1,4 +1,5 @@
-export * as logger from './logger';
+export * from './logger';
+export { default as logger } from './logger';
 export { default as listen } from './listen';
 export { default as Package } from './package';
 export { default as Request } from './request';

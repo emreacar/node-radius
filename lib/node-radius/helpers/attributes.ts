@@ -10,7 +10,7 @@ const ATTR_ID = 3;
 export default class Attributes {
   constructor() {}
 
-  static decodeList(buffer, secret, Authenticator) {
+  static decodeList(buffer: Buffer, secret: string, Authenticator: Buffer) {
     const list = {};
 
     while (buffer.length > 0) {
@@ -24,10 +24,13 @@ export default class Attributes {
         Authenticator
       );
 
-      list[attr.name] = attr.value;
+      if (attr) {
+        list[attr.name] = attr.value;
 
-      buffer = buffer.slice(lengthAttr);
+        buffer = buffer.slice(lengthAttr);
+      }
     }
+
     return list;
   }
 
@@ -72,22 +75,26 @@ export default class Attributes {
     return Dictionary.get(type);
   }
 
-  static decodeAttribute(type, length, buffer, ...store) {
+  static decodeAttribute(
+    type: number,
+    length: number,
+    buffer: Buffer,
+    secret: String,
+    Authenticator: Buffer
+  ) {
     if (!(buffer instanceof Uint8Array)) {
-      debug('Invalid Type for Attribute Buffer');
-      return false;
+      return debug('Invalid Type for Attribute Buffer');
     }
 
     if (buffer.length !== length) {
-      debug(`Length Mismatch in Attribute`);
-      return false;
+      return debug(`Length Mismatch in Attribute`);
     }
 
-    let value = buffer.slice(2, buffer.length);
+    let value = buffer.slice(2, buffer.length) as any;
     const attribute = Attributes.getType(type);
     // console.log(attribute, value)
     if (attribute[ATTR_SPECS] && attribute[ATTR_SPECS].includes('encrypt=1')) {
-      value = Crypt.decode(value, ...store);
+      value = Crypt.decode(value, secret, Authenticator);
     }
 
     switch (attribute[ATTR_TYPE]) {
