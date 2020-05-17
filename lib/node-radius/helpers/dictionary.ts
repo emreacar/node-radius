@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { debug, info } from './logger';
 
+import { ICommon } from '../../types';
+
 const Dict = new Map();
 // const Vendor = new Map();
 
@@ -60,7 +62,7 @@ const importContent = dContent => {
   }
 };
 
-const addAttr: SpreadableFn = (vendor, attr, id, type, ...params) => {
+const addAttr: ICommon.SpreadableFn = (vendor, attr, id, type, ...params) => {
   id = Number(id);
 
   if (!Number.isInteger(id)) {
@@ -73,7 +75,7 @@ const addAttr: SpreadableFn = (vendor, attr, id, type, ...params) => {
   info('Dictionary Entry Added', id, attr);
 };
 
-const addVendor: SpreadableFn = (name, id, ...params) => {};
+const addVendor: ICommon.SpreadableFn = (name, id, ...params) => {};
 
 export default {
   get,

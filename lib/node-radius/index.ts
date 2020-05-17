@@ -9,6 +9,8 @@ import {
 } from './helpers';
 import { RemoteInfo } from 'dgram';
 
+import { IRadius, ICommon } from '../types';
+
 /**
  * @todo
  * [-] More Effective Attribute Class
@@ -16,7 +18,7 @@ import { RemoteInfo } from 'dgram';
  */
 
 export default class Radius {
-  options: Radius.Options;
+  options: IRadius.Options;
   _clients: any;
   _handlers: any;
   _customEvents: string[];
@@ -52,17 +54,17 @@ export default class Radius {
   }
   /**
    *
-   * @param {Radius.Client} client
+   * @param {IRadius.Client} client
    * @model { ip: string, secret: string, name?: string }
    * @example addClient({ip: 192.168.1.1, secret: 'secret'})
    */
-  addClient(...clients: Radius.ClientRegistry[]) {
+  addClient(...clients: IRadius.ClientRegistry[]) {
     clients.forEach(client => {
       this._clients.set(client.ip, client);
     });
   }
 
-  addListener(eventName: string, callback: SpreadableFn) {
+  addListener(eventName: string, callback: ICommon.SpreadableFn) {
     eventEmitter.on(eventName, callback);
   }
 
@@ -70,7 +72,7 @@ export default class Radius {
    *
    * @param {Function} middleware
    */
-  use(middleware: Middleware) {
+  use(middleware: ICommon.Middleware) {
     if (typeof middleware !== 'function') {
       eventEmitter.emit('error', 'Middleware must be a function!');
       process.exit(0);
@@ -79,7 +81,7 @@ export default class Radius {
     this._handlers.push(middleware);
   }
 
-  getClient({ address, ...params }: RemoteInfo): Radius.Client {
+  getClient({ address, ...params }: RemoteInfo): IRadius.Client {
     const client = this._clients.get(address);
 
     if (client) client.connection = { ...params };

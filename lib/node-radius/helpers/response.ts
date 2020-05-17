@@ -1,9 +1,11 @@
 import { EventEmitter } from 'events';
 import { debug } from './logger';
 
+import { IResponse } from '../../types';
+
 const eventEmitter = new EventEmitter();
 
-const codeRelations: Response.RelationMap = {
+const codeRelations: IResponse.RelationMap = {
   1: {
     accept: { code: 2, name: 'Access-Accept' },
     reject: { code: 3, name: 'Access-Reject' },
@@ -100,7 +102,7 @@ export default class Response {
   }
 
   /** @TODO add remove method for attributes */
-  on(eventName: string, fn: Response.SocketListener) {
+  on(eventName: string, fn: IResponse.SocketListener) {
     eventEmitter.on(eventName, fn);
   }
 

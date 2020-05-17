@@ -2,7 +2,9 @@ import { createSocket, Socket } from 'dgram';
 import eventEmitter from './eventEmitter';
 import { info } from './logger';
 
-const listen: Helpers.Listener<Socket> = (type, targetPort) => {
+import { IHelpers } from '../../types';
+
+const listen: IHelpers.Listener<Socket> = (type, targetPort) => {
   const socket = createSocket('udp4');
 
   socket.on('error', err => {

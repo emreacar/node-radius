@@ -1,4 +1,4 @@
-declare namespace Response {
+export declare namespace IResponse {
   type SocketListener = (...args: Array<any>) => void;
 
   type RelationValue = {
