@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events'
 import { debug } from './logger'
 
-import { IResponse } from '../../types'
+import { IResponse } from '../types'
 
 const eventEmitter = new EventEmitter()
 

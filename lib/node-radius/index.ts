@@ -9,7 +9,7 @@ import {
 } from './helpers'
 import { RemoteInfo } from 'dgram'
 
-import { IRadius, ICommon } from '../types'
+import { IRadius, ICommon } from './types'
 
 /**
  * @todo

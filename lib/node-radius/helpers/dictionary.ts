@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { debug, info } from './logger'
 
-import { ICommon } from '../../types'
+import { ICommon } from '../types'
 
 const Dict = new Map()
 // const Vendor = new Map();
