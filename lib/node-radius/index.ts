@@ -6,10 +6,10 @@ import {
   logger,
   listen,
   eventEmitter,
-} from './helpers';
-import { RemoteInfo } from 'dgram';
+} from './helpers'
+import { RemoteInfo } from 'dgram'
 
-import { IRadius, ICommon } from '../types';
+import { IRadius, ICommon } from '../types'
 
 /**
  * @todo
@@ -18,39 +18,39 @@ import { IRadius, ICommon } from '../types';
  */
 
 export default class Radius {
-  options: IRadius.Options;
-  _clients: any;
-  _handlers: any;
-  _customEvents: string[];
+  options: IRadius.Options
+  _clients: any
+  _handlers: any
+  _customEvents: string[]
 
   constructor(customOptions = {}) {
     this.options = {
       authorizationPort: 1812,
       accountingPort: 1813,
       ...customOptions,
-    };
+    }
 
     /** Default EventEmitter for Errors */
     eventEmitter.on('error', error => {
-      logger.error('Error On Init:', error);
-      process.exit(0);
-    });
+      logger.error('Error On Init:', error)
+      process.exit(0)
+    })
 
-    const { authorizationPort, accountingPort } = this.options;
+    const { authorizationPort, accountingPort } = this.options
 
     if (authorizationPort === accountingPort) {
-      const message = 'Auhotization and Accounting Ports must be different.';
+      const message = 'Auhotization and Accounting Ports must be different.'
 
-      eventEmitter.emit('error', message);
+      eventEmitter.emit('error', message)
     }
 
     /** Todo: Add Dictionary To middleware after */
-    Dictionary.load();
+    Dictionary.load()
 
-    this._clients = new Map();
-    this._handlers = [];
+    this._clients = new Map()
+    this._handlers = []
 
-    this._customEvents = ['error'];
+    this._customEvents = ['error']
   }
   /**
    *
@@ -60,12 +60,12 @@ export default class Radius {
    */
   addClient(...clients: IRadius.ClientRegistry[]) {
     clients.forEach(client => {
-      this._clients.set(client.ip, client);
-    });
+      this._clients.set(client.ip, client)
+    })
   }
 
   addListener(eventName: string, callback: ICommon.SpreadableFn) {
-    eventEmitter.on(eventName, callback);
+    eventEmitter.on(eventName, callback)
   }
 
   /**
@@ -74,59 +74,59 @@ export default class Radius {
    */
   use(middleware: ICommon.Middleware) {
     if (typeof middleware !== 'function') {
-      eventEmitter.emit('error', 'Middleware must be a function!');
-      process.exit(0);
+      eventEmitter.emit('error', 'Middleware must be a function!')
+      process.exit(0)
     }
 
-    this._handlers.push(middleware);
+    this._handlers.push(middleware)
   }
 
   getClient({ address, ...params }: RemoteInfo): IRadius.Client {
-    const client = this._clients.get(address);
+    const client = this._clients.get(address)
 
-    if (client) client.connection = { ...params };
+    if (client) client.connection = { ...params }
 
-    return client || false;
+    return client || false
   }
 
   start() {
-    const sockets = ['authorization', 'accounting'];
+    const sockets = ['authorization', 'accounting']
 
     sockets.forEach(type => {
-      const socket = listen(type, this.options[type + 'Port']);
+      const socket = listen(type, this.options[type + 'Port'])
 
       socket.on('message', async (buffer, rinfo) => {
-        const client = this.getClient(rinfo);
+        const client = this.getClient(rinfo)
 
         if (!client) {
           logger.debug(
             rinfo.address,
             `There is no client in known clients. Connection terminated`
-          );
-          return;
+          )
+          return
         }
 
         try {
-          const packet = new Package(buffer, client);
-          const request = new Request(packet.request);
-          const response = new Response(packet);
+          const packet = new Package(buffer, client)
+          const request = new Request(packet.request)
+          const response = new Response(packet)
 
-          const middlewares = [...this._handlers];
+          const middlewares = [...this._handlers]
 
           const next = async () => {
-            if (middlewares.length) await middlewares.shift()(request, response, next);
-          };
+            if (middlewares.length) await middlewares.shift()(request, response, next)
+          }
 
-          await next();
+          await next()
 
-          response.on('send', (...params) => {
-            socket.send.apply(this, params as any);
-          });
+          response.on('send', (responseBuffer, port, address) => {
+            socket.send(responseBuffer, port, address)
+          })
         } catch (e) {
-          // logger.debug('Incoming Message Error:', e.message)
-          return;
+          logger.debug('Incoming Message Error:', e)
+          return
         }
-      });
-    });
+      })
+    })
   }
 }

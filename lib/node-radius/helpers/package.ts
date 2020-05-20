@@ -1,5 +1,5 @@
-import crypto from 'crypto';
-import Attributes from './attributes';
+import crypto from 'crypto'
+import Attributes from './attributes'
 
 const codeFromId = new Map([
   [1, 'Access-Request'],
@@ -10,15 +10,15 @@ const codeFromId = new Map([
   [11, 'Access-Challenge'],
   [12, 'Status-Server'],
   [13, 'Status-Client'],
-]);
+])
 
 const codeFromName = new Map(
   [...codeFromId.entries()].map(([key, value]) => [value, key])
-);
+)
 
 export default class Package {
-  responseAttrs: any;
-  request: any;
+  responseAttrs: any
+  request: any
 
   /**
    *
@@ -26,8 +26,8 @@ export default class Package {
    * @param {Object} client
    */
   constructor(buffer, client) {
-    Package.validate(buffer, client);
-    this.decode(buffer, client);
+    Package.validate(buffer, client)
+    this.decode(buffer, client)
   }
 
   /**
@@ -37,13 +37,13 @@ export default class Package {
    */
   static validate(buffer, client) {
     if (buffer.length < 20) {
-      throw new Error(`PACKAGE too short from ${client.address}`);
+      throw new Error(`PACKAGE too short from ${client.address}`)
     }
 
     if (buffer.length < buffer.readUInt16BE(2)) {
-      throw new Error(`Package sizes do not mismatch`);
+      throw new Error(`Package sizes do not mismatch`)
     }
-    return true;
+    return true
   }
   /**
    *
@@ -51,8 +51,8 @@ export default class Package {
    * @return {Number}
    */
   getCodeId(code) {
-    console.log('CODE LOOKING', code);
-    return codeFromName.get(code);
+    console.log('CODE LOOKING', code)
+    return codeFromName.get(code)
   }
 
   /**
@@ -61,7 +61,7 @@ export default class Package {
    * @return {String}
    */
   getCodeName(codeId) {
-    return codeFromId.get(codeId);
+    return codeFromId.get(codeId)
   }
   /**
    * @param {Buffer} buffer
@@ -69,16 +69,16 @@ export default class Package {
    * @returns {Object} Creates Package Request, Client and Resposne Objects
    */
   decode(buffer, client) {
-    const Length = buffer.readUInt16BE(2);
-    const CodeId = buffer.readUInt8(0);
-    const Code = codeFromId.get(CodeId);
-    const Identifier = buffer[1];
-    const Authenticator = buffer.slice(4, 20);
+    const Length = buffer.readUInt16BE(2)
+    const CodeId = buffer.readUInt8(0)
+    const Code = codeFromId.get(CodeId)
+    const Identifier = buffer[1]
+    const Authenticator = buffer.slice(4, 20)
     const Attr = Attributes.decodeList(
       buffer.slice(20, Length),
       client.secret,
       Authenticator
-    );
+    )
 
     Object.defineProperties(this, {
       client: {
@@ -98,7 +98,7 @@ export default class Package {
       responseAttrs: {
         value: [],
       },
-    });
+    })
   }
 
   /**
@@ -108,54 +108,54 @@ export default class Package {
    * @TODO add value validation for type
    */
   addAttribute(type, value) {
-    const attribute = Attributes.getType(type);
-    if (!attribute) throw Error(`${type} is unknown attribute.`);
+    const attribute = Attributes.getType(type)
+    if (!attribute) throw Error(`${type} is unknown attribute.`)
 
     this.responseAttrs.push({
       attribute,
       value,
-    });
+    })
   }
 
   encode(code) {
-    const Code = codeFromName.get(code);
-    const { Client, Identifier, Authenticator } = this.request;
-    let responseBuffer = Buffer.alloc(4096);
+    const Code = codeFromName.get(code)
+    const { Client, Identifier, Authenticator } = this.request
+    let responseBuffer = Buffer.alloc(4096)
     if (Code === undefined) {
-      throw new Error('Package Code is Invalid.');
+      throw new Error('Package Code is Invalid.')
     }
 
-    let offset = 0;
-    offset = responseBuffer.writeUInt8(Code, 0);
-    offset = responseBuffer.writeUInt8(Identifier, offset);
+    let offset = 0
+    offset = responseBuffer.writeUInt8(Code, 0)
+    offset = responseBuffer.writeUInt8(Identifier, offset)
 
-    const length_offset = offset;
-    offset = responseBuffer.writeUInt16BE(0, offset);
+    const length_offset = offset
+    offset = responseBuffer.writeUInt16BE(0, offset)
 
-    const authenticator_offset = offset;
-    Authenticator.copy(responseBuffer, offset);
-    offset += 16; /** Because Authenticator Length is 16 */
+    const authenticator_offset = offset
+    Authenticator.copy(responseBuffer, offset)
+    offset += 16 /** Because Authenticator Length is 16 */
 
-    const attrBuffer = Attributes.encodeList(this.responseAttrs);
-    attrBuffer.copy(responseBuffer, offset);
+    const attrBuffer = Attributes.encodeList(this.responseAttrs)
+    attrBuffer.copy(responseBuffer, offset)
 
-    offset += attrBuffer.length;
+    offset += attrBuffer.length
 
-    const packageLength = offset;
-    responseBuffer.writeUInt16BE(packageLength, length_offset);
-    responseBuffer = responseBuffer.slice(0, packageLength);
+    const packageLength = offset
+    responseBuffer.writeUInt16BE(packageLength, length_offset)
+    responseBuffer = responseBuffer.slice(0, packageLength)
 
     /** restore Authentication */
     const hash = crypto
       .createHash('md5')
       .update(responseBuffer)
       .update(Client.secret)
-      .digest('binary' as any);
+      .digest('binary' as any)
 
-    const AuthenticationBuffer = Buffer.from(hash, 'binary');
+    const AuthenticationBuffer = Buffer.from(hash, 'binary')
 
-    AuthenticationBuffer.copy(responseBuffer, authenticator_offset);
+    AuthenticationBuffer.copy(responseBuffer, authenticator_offset)
 
-    return responseBuffer;
+    return responseBuffer
   }
 }

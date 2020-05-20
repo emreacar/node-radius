@@ -1,9 +1,9 @@
-import { EventEmitter } from 'events';
-import { debug } from './logger';
+import { EventEmitter } from 'events'
+import { debug } from './logger'
 
-import { IResponse } from '../../types';
+import { IResponse } from '../../types'
 
-const eventEmitter = new EventEmitter();
+const eventEmitter = new EventEmitter()
 
 const codeRelations: IResponse.RelationMap = {
   1: {
@@ -17,15 +17,15 @@ const codeRelations: IResponse.RelationMap = {
     default: { code: 5, name: 'Accounting-Response' },
     allows: [5],
   },
-};
+}
 
 export default class Response {
-  packet: any;
-  request: any;
-  code: any;
+  packet: any
+  request: any
+  code: any
 
   constructor(packet) {
-    let code;
+    let code
 
     // ? Makes the package read-only for secure Incoming Package Data
     Object.defineProperties(this, {
@@ -39,24 +39,24 @@ export default class Response {
         set: value => (code = this.checkCode(value)),
         get: () => code,
       },
-    });
+    })
   }
 
   checkCode(code) {
-    const codeId = this.packet.getCodeId(code);
-    const reqCodeId = this.request.CodeId;
+    const codeId = this.packet.getCodeId(code)
+    const reqCodeId = this.request.CodeId
 
-    if (!codeId) throw Error(`${code}: Code is invalid`);
+    if (!codeId) throw Error(`${code}: Code is invalid`)
 
     if (!codeRelations[reqCodeId] || !codeRelations[reqCodeId].allows.includes(codeId)) {
       throw Error(
         `You can not response with ${code} to ${this.packet.getCodeName(
           reqCodeId
         )} package.`
-      );
+      )
     }
 
-    return code;
+    return code
   }
 
   /**
@@ -66,12 +66,12 @@ export default class Response {
    * @description if set true, after set response code, it will send response automatically.
    */
   reject(sendAfter = false) {
-    const reqCodeId = this.request.CodeId;
-    const Code = codeRelations[reqCodeId].reject || codeRelations[reqCodeId].default;
+    const reqCodeId = this.request.CodeId
+    const Code = codeRelations[reqCodeId].reject || codeRelations[reqCodeId].default
 
-    this.code = Code.name;
+    this.code = Code.name
 
-    if (sendAfter) this.send();
+    if (sendAfter) this.send()
   }
 
   /**
@@ -81,12 +81,12 @@ export default class Response {
    * @description if set true, after set response code, it will send response automatically.
    */
   accept(sendAfter = false) {
-    const reqCodeId = this.request.CodeId;
-    const Code = codeRelations[reqCodeId].accept || codeRelations[reqCodeId].default;
+    const reqCodeId = this.request.CodeId
+    const Code = codeRelations[reqCodeId].accept || codeRelations[reqCodeId].default
 
-    this.code = Code.name;
+    this.code = Code.name
 
-    if (sendAfter) this.send();
+    if (sendAfter) this.send()
   }
 
   /**
@@ -98,29 +98,29 @@ export default class Response {
    * @example set('Framed-IP-Address', '192.168.3.3')
    */
   add(type, value) {
-    this.packet.addAttribute(type, value);
+    this.packet.addAttribute(type, value)
   }
 
   /** @TODO add remove method for attributes */
   on(eventName: string, fn: IResponse.SocketListener) {
-    eventEmitter.on(eventName, fn);
+    eventEmitter.on(eventName, fn)
   }
 
   send() {
     if (!this.code) {
-      this.reject();
+      this.reject()
 
-      debug(`You should define a response code!`);
-      debug(`Request will automatically responded (${this.code}) code.`);
+      debug(`You should define a response code!`)
+      debug(`Request will automatically responded (${this.code}) code.`)
     }
 
-    const responsePacket = this.packet.encode(this.code);
+    const responsePacket = this.packet.encode(this.code)
 
     eventEmitter.emit(
       'send',
       responsePacket,
       this.request.Client.connection.port,
       this.request.Client.ip
-    );
+    )
   }
 }

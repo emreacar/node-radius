@@ -1,6 +1,6 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events'
 
 // TODO: export const
-const eventEmitter = new EventEmitter();
+const eventEmitter = new EventEmitter()
 
-export default eventEmitter;
+export default eventEmitter
