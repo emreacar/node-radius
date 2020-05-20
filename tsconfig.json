@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "commonjs",
+    "target": "es2019",
+    "lib": ["es2019", "es2020.bigint", "es2020.string", "es2020.symbol.wellknown"],
+
+    "strict": false,
+
+    "sourceMap": true,
+    "removeComments": true,
+    "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "moduleResolution": "node"
+  },
+
+  "typeRoots": ["node_modules/@types"],
+
+  "exclude": ["node_modules", "dist"]
+}
