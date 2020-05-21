@@ -9,7 +9,7 @@ const codeFromId = new Map([
   [5, 'Accounting-Response'],
   [11, 'Access-Challenge'],
   [12, 'Status-Server'],
-  [13, 'Status-Client'],
+  [13, 'Status-Client']
 ])
 
 const codeFromName = new Map(
@@ -97,7 +97,7 @@ export default class Package {
       },
       responseAttrs: {
         value: [],
-      },
+      }
     })
   }
 
@@ -107,7 +107,7 @@ export default class Package {
    * @param {*} value
    * @TODO add value validation for type
    */
-  addAttribute(type, value) {
+  addAttribute(type:string, value: any) {
     const attribute = Attributes.getType(type)
     if (!attribute) throw Error(`${type} is unknown attribute.`)
 

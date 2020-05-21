@@ -2,11 +2,6 @@ import { debug } from './logger'
 import Dictionary from './dictionary'
 import Crypt from './crypt'
 
-const ATTR_NAME = 0
-const ATTR_TYPE = 1
-const ATTR_SPECS = 2
-const ATTR_ID = 3
-
 export default class Attributes {
   constructor() {}
 
@@ -26,9 +21,9 @@ export default class Attributes {
 
       if (attr) {
         list[attr.name] = attr.value
-
-        buffer = buffer.slice(lengthAttr)
       }
+      /** whatever pass next attr */
+      buffer = buffer.slice(lengthAttr)
     }
 
     return list
@@ -38,9 +33,9 @@ export default class Attributes {
     let attr_offset = 0
     let attrBuffer = Buffer.alloc(4096)
 
-    for (let { attribute, value } of responseAttrs) {
+    for (let { attr, value } of responseAttrs) {
       /** @TODO Add Other Types */
-      switch (attribute[ATTR_TYPE]) {
+      switch (attr.type) {
         case 'string':
         case 'text':
           value = Buffer.from(value, 'utf8')
@@ -60,7 +55,7 @@ export default class Attributes {
           break
       }
 
-      attr_offset = attrBuffer.writeUInt8(attribute[ATTR_ID], attr_offset)
+      attr_offset = attrBuffer.writeUInt8(attr.id, attr_offset)
       attr_offset = attrBuffer.writeUInt8(2 + value.length, attr_offset)
       value.copy(attrBuffer, attr_offset)
       attr_offset += value.length
@@ -71,8 +66,16 @@ export default class Attributes {
     return attrBuffer
   }
 
-  static getType(type) {
-    return Dictionary.get(type)
+  static getType(id:number|string) {
+    if (!Number.isInteger(id as number)) {
+      id = Dictionary.getId(id as string)
+    }
+
+    if (id > 0) {
+      return Dictionary.get(id as number)
+    }
+
+    return false
   }
 
   static decodeAttribute(
@@ -83,21 +86,29 @@ export default class Attributes {
     Authenticator: Buffer
   ) {
     if (!(buffer instanceof Uint8Array)) {
-      return debug('Invalid Type for Attribute Buffer')
+      debug('Invalid Type for Attribute Buffer')
+      return false
     }
 
     if (buffer.length !== length) {
-      return debug(`Length Mismatch in Attribute`)
+      debug('Length Mismatch in Attribute')
+      return false
     }
 
     let value = buffer.slice(2, buffer.length) as any
-    const attribute = Attributes.getType(type)
-    // console.log(attribute, value)
-    if (attribute[ATTR_SPECS] && attribute[ATTR_SPECS].includes('encrypt=1')) {
+
+    const Attr = Attributes.getType(type)
+
+    if (!Attr) {
+      debug('Unknown Attribute:', type)
+      return false
+    }
+
+    if (Attr.flags && Attr.flags.includes('encrypt=1')) {
       value = Crypt.decode(value, secret, Authenticator)
     }
 
-    switch (attribute[ATTR_TYPE]) {
+    switch (Attr.type) {
       /** @TODO Add Other Types */
       case 'string':
       case 'text':
@@ -118,7 +129,7 @@ export default class Attributes {
         break
     }
 
-    const name = attribute[ATTR_NAME].replace(/-/g, '')
+    const name = Attr.name.replace(/-/g, '')
 
     return { name, value }
   }

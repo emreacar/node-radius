@@ -1,22 +1,18 @@
 import Radius from './lib/node-radius'
+import clients from './clients'
+
+// const clients = [
+//   { ip: '127.0.0.1', secret: 'secret', name: 'NAS-1' },
+//   { ip: '185.224.3.83', secret: 'secret', name: 'NAS-2' }
+// ]
 
 const server = new Radius()
-
-const clients = [
-  { ip: '127.0.0.1', secret: 'secret', name: 'NAS-1' },
-  { ip: '192.168.1.2', secret: 'secret', name: 'NAS-2' },
-]
 
 server.addClient(...clients)
 
 server.use((req, res) => {
-  if (req.data.UserName === '***') {
-    console.log(req.code, req.data.UserPassword)
-    res.accept(true)
-  } else {
-    console.log(req.code, req.data.UserPassword, 'rejected')
-    res.reject(true)
-  }
+  console.log(req.data)
+  res.reject(true)
 })
 
 server.start()
