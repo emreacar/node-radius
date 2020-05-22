@@ -1,43 +1,43 @@
 import fs from 'fs'
 import path from 'path'
-import { debug, error } from './logger'
+import { debug } from './logger'
 import { ICommon } from '../types'
 
 const defVendorId:number = -1
 const defVendorName:string = 'Default'
 
-let currentVendor:Number = defVendorId
+let currentVendor:number = defVendorId
 
 const Dict = new Map()
 const Attr = new Map()
 const Vendor = new Map()
 const Locations = [path.normalize(__dirname + '/../dictionary')]
 
-export const get = (id: number, vendor: number = -1 ) => {
+export const get = (id: number|string, vendor: number = -1 ) => {
+  if (!Attr.has(id)) {
+    throw new Error(`${id} is unknown attribute`)
+  }
+
+  if (!Dict.has(vendor) || !Dict.get(vendor).has(id)) {
+    const attribute = Attr.get(id)
+    vendor = attribute.vendor
+    id = attribute.id
+  }
+
+  if (!Dict.has(vendor) || !Dict.get(vendor).has(id)) {
+    throw new Error(`Vendor or Attr is unknown for vendor: ${vendor}, attr: ${id}`)
+  }
+
   return Dict.get(vendor).get(id)
 }
-
-export const getId = (type: string, vendor: number = -1):number => {
-  if (!Dict.has(vendor)) {
-    error(`Vendor is unknown for id: ${vendor}`)
-    return 0
-  }
-
-  if (!Attr.has(type)) {
-    error(`${type} is Unknown Attribute`)
-    return 0
-  }
-
-  return Attr.get(type)
-}
-
 
 const add = file => {
   Locations.push(file)
 }
 
-const load = () => {
-  Locations.forEach(file => {
+const load = (externalDicts = []) => {
+  let locations = Locations.concat(externalDicts)
+  locations.forEach(file => {
     if (!fs.existsSync(file)) {
       throw new Error(`Dictionary File Doesn't Exist: ${file}`)
     }
@@ -95,9 +95,10 @@ const importContent = dContent => {
 
 const addAttr: ICommon.SpreadableFn = (vendor, attr, id, type, ...flags) => {
   id = Number(id)
+  vendor = Number(vendor)
 
-  if (!Number.isInteger(id)) {
-    throw new Error('Attribute Id must be Integer')
+  if (!Number.isFinite(id)) {
+    throw new Error('Attribute Id must be Integer or Float')
   }
 
   if (vendor !== defVendorId && !Dict.has(vendor)) {
@@ -113,7 +114,9 @@ const addAttr: ICommon.SpreadableFn = (vendor, attr, id, type, ...flags) => {
   }
 
   Dict.get(vendor).set(id, Entry)
-  Attr.set(attr, id)
+  Attr.set(attr, {id, attr, vendor})
+  Attr.set(id, {id, attr, vendor})
+
   debug('Dictionary Attribute Added', Vendor.get(vendor), id, attr)
 }
 
@@ -122,18 +125,24 @@ const addAttrValue: ICommon.SpreadableFn = (vendor, attr, value, id) => {
     throw new Error(`Vendor is unknown for VSA attribute value ${Vendor.get(vendor)}, ${attr}`)
   }
 
-  const attrId = Attr.get(attr)
-
-  if (!Dict.get(vendor).has(attrId)) {
-    throw new Error(`Attribute is unknown for value ${Vendor.get(vendor)}, ${attr}`)
+  if (!Attr.has(attr)) {
+    throw new Error(`Unknown Attribute for ${attr}`)
   }
 
-  Dict.get(vendor).get(attrId).values.set(id, value)
-  Dict.get(vendor).get(attrId).values.set(value, id)
+  const attribute = Attr.get(attr)
+
+  if (!Dict.has(attribute.vendor) || !Dict.get(attribute.vendor).has(attribute.id)) {
+    throw new Error(`Unknown Attribute Value for ${Vendor.get(vendor)} -> ${attr}`)
+  }
+
+  Dict.get(attribute.vendor).get(attribute.id).values.set(id, value)
+  Dict.get(attribute.vendor).get(attribute.id).values.set(value, id)
   debug(`${attr} value added:`, value, id)
 }
 
 const addVendor: ICommon.SpreadableFn = (name: String, id: Number) => {
+  id = Number(id)
+
   if (Vendor.has(id)) {
     throw new Error('Dublicated Vendor Id for Dictionary.')
   }
@@ -157,7 +166,6 @@ addVendor(defVendorName, defVendorId)
 
 export default {
   get,
-  getId,
   add,
   load,
 }

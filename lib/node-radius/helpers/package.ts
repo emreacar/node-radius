@@ -51,7 +51,6 @@ export default class Package {
    * @return {Number}
    */
   getCodeId(code) {
-    console.log('CODE LOOKING', code)
     return codeFromName.get(code)
   }
 
@@ -108,7 +107,7 @@ export default class Package {
    * @TODO add value validation for type
    */
   addAttribute(type:string, value: any) {
-    const attribute = Attributes.getType(type)
+    const attribute = Attributes.getAttr(type)
     if (!attribute) throw Error(`${type} is unknown attribute.`)
 
     this.responseAttrs.push({
@@ -153,7 +152,6 @@ export default class Package {
       .digest('binary' as any)
 
     const AuthenticationBuffer = Buffer.from(hash, 'binary')
-
     AuthenticationBuffer.copy(responseBuffer, authenticator_offset)
 
     return responseBuffer

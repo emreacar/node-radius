@@ -2,6 +2,10 @@ import { debug } from './logger'
 import Dictionary from './dictionary'
 import Crypt from './crypt'
 
+// Default Vendor Specific ID as RFC2865
+const VsaId = 26
+const defaultVId = -1
+
 export default class Attributes {
   constructor() {}
 
@@ -11,17 +15,51 @@ export default class Attributes {
     while (buffer.length > 0) {
       const typeAttr = buffer.readUInt8(0)
       const lengthAttr = buffer.readUInt8(1)
-      const attr = Attributes.decodeAttribute(
-        typeAttr,
-        lengthAttr,
-        buffer.slice(0, lengthAttr),
-        secret,
-        Authenticator
-      )
+      const bufferAttr = buffer.slice(0, lengthAttr)
 
-      if (attr) {
-        list[attr.name] = attr.value
+      let vendorId = defaultVId
+      let valueOffset = 2 /** includes type and length */
+
+      if (typeAttr === VsaId) {
+        vendorId = bufferAttr.readUInt32BE(2) /** Read after length */
+        valueOffset = 6 /** includes type, length and vendorId */
       }
+
+      let value = bufferAttr.slice(valueOffset, lengthAttr) as any
+
+      try {
+        if (!(bufferAttr instanceof Uint8Array)) {
+          throw new Error('Invalid Type for Attribute Buffer')
+        }
+
+        const Dict = Attributes.getAttr(typeAttr, vendorId)
+
+        if (Dict.flags && Dict.flags.includes('encrypt=1')) {
+          value = Crypt.decode(value, secret, Authenticator)
+        }
+
+        switch (Dict.type) {
+          case 'string':
+          case 'text':
+            value = value.toString('utf8')
+            break
+          case 'ipaddr':
+            value = [].join.call(value, '.')
+            break
+          case 'date':
+            value = new Date(value.readUInt32BE(0) * 1000).toISOString()
+            break
+          case 'time':
+          case 'integer':
+            value = value.readUInt32BE(0)
+            break
+        }
+
+        list[Attributes.stripName(Dict.name)] = value
+      } catch(e) {
+        debug(e)
+      }
+
       /** whatever pass next attr */
       buffer = buffer.slice(lengthAttr)
     }
@@ -66,71 +104,19 @@ export default class Attributes {
     return attrBuffer
   }
 
-  static getType(id:number|string) {
-    if (!Number.isInteger(id as number)) {
-      id = Dictionary.getId(id as string)
-    }
-
-    if (id > 0) {
-      return Dictionary.get(id as number)
-    }
-
-    return false
+  static getAttr(id:number|string, vendorId:number= defaultVId) {
+    return Dictionary.get(id, vendorId)
   }
 
-  static decodeAttribute(
-    type: number,
-    length: number,
-    buffer: Buffer,
-    secret: String,
-    Authenticator: Buffer
-  ) {
-    if (!(buffer instanceof Uint8Array)) {
-      debug('Invalid Type for Attribute Buffer')
-      return false
-    }
+  static stripName(attrName:string):string {
+    return attrName.replace(/-/g, '')
+  }
 
-    if (buffer.length !== length) {
-      debug('Length Mismatch in Attribute')
-      return false
-    }
+  static decodeVsa(buffer:Buffer) {
+    const vendorId = buffer.readUInt32BE(0)
 
-    let value = buffer.slice(2, buffer.length) as any
+    console.log(vendorId)
 
-    const Attr = Attributes.getType(type)
-
-    if (!Attr) {
-      debug('Unknown Attribute:', type)
-      return false
-    }
-
-    if (Attr.flags && Attr.flags.includes('encrypt=1')) {
-      value = Crypt.decode(value, secret, Authenticator)
-    }
-
-    switch (Attr.type) {
-      /** @TODO Add Other Types */
-      case 'string':
-      case 'text':
-        value = value.toString('utf8')
-        break
-
-      case 'ipaddr':
-        value = [].join.call(value, '.')
-        break
-
-      case 'date':
-        value = new Date(value).toISOString()
-        break
-
-      case 'time':
-      case 'integer':
-        value = value.readUInt32BE(0)
-        break
-    }
-
-    const name = Attr.name.replace(/-/g, '')
-
-    return { name, value }
+    return buffer
   }
 }

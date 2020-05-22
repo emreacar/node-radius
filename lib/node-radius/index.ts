@@ -27,6 +27,7 @@ export default class Radius {
     this.options = {
       authorizationPort: 1812,
       accountingPort: 1813,
+      dictionary: [],
       ...customOptions,
     }
 
@@ -45,7 +46,9 @@ export default class Radius {
     }
 
     /** Todo: Add Dictionary To middleware after */
-    Dictionary.load()
+    Dictionary.load(
+      this.options.dictionary
+    )
 
     this._clients = new Map()
     this._handlers = []
