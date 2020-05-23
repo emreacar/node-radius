@@ -2,6 +2,7 @@ import logger from 'debug'
 
 /**
  * Add ENV Variable for set enabled log levels,
+ * @TODO Allow creating log files on local spesific directory
  * @example DEBUG=info, debug... for multiple level sperate commas.
  */
 
