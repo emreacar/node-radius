@@ -1,10 +1,4 @@
 export declare namespace IResponse {
-  type SocketListener = (
-    msg: string | any[] | Uint8Array,
-    port?: number,
-    address?: string
-  ) => void
-
   type RelationValue = {
     code: number
     name: string

@@ -2,6 +2,7 @@ export declare namespace IRadius {
   type Options = {
     authorizationPort: number
     accountingPort: number
+    dictionary: [],
     [key: string]: any
   }
 

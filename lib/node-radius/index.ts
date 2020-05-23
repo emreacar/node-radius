@@ -7,21 +7,14 @@ import {
   listen,
   eventEmitter,
 } from './helpers'
+
 import { RemoteInfo } from 'dgram'
-
 import { IRadius, ICommon } from './types'
-
-/**
- * @todo
- * [-] More Effective Attribute Class
- * [-] VSA for Dictionary
- */
 
 export default class Radius {
   options: IRadius.Options
   _clients: any
   _handlers: any
-  _customEvents: string[]
 
   constructor(customOptions = {}) {
     this.options = {
@@ -45,15 +38,12 @@ export default class Radius {
       eventEmitter.emit('error', message)
     }
 
-    /** Todo: Add Dictionary To middleware after */
     Dictionary.load(
       this.options.dictionary
     )
 
     this._clients = new Map()
     this._handlers = []
-
-    this._customEvents = ['error']
   }
   /**
    *
@@ -84,10 +74,10 @@ export default class Radius {
     this._handlers.push(middleware)
   }
 
-  getClient({ address, ...params }: RemoteInfo): IRadius.Client {
+  getClient({ address, ...connection }: RemoteInfo): IRadius.Client {
     const client = this._clients.get(address)
 
-    if (client) client.connection = { ...params }
+    if (client) client.connection = { ...connection }
 
     return client || false
   }
@@ -112,7 +102,7 @@ export default class Radius {
         try {
           const packet = new Package(buffer, client)
           const request = new Request(packet.request)
-          const response = new Response(packet)
+          const response = new Response(packet, socket)
 
           const middlewares = [...this._handlers]
 
@@ -121,10 +111,6 @@ export default class Radius {
           }
 
           await next()
-
-          response.on('send', (responseBuffer, port, address) => {
-            socket.send(responseBuffer, port, address)
-          })
         } catch (e) {
           logger.debug('Incoming Message Error:', e)
           return

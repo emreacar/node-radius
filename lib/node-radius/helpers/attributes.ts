@@ -1,6 +1,7 @@
 import { debug } from './logger'
 import Dictionary from './dictionary'
 import Crypt from './crypt'
+import { IDictionary } from '../types'
 
 // Default Vendor Specific ID as RFC2865
 const VsaId = 26
@@ -9,7 +10,11 @@ const defaultVId = -1
 export default class Attributes {
   constructor() {}
 
-  static decodeList(buffer: Buffer, secret: string, Authenticator: Buffer) {
+  static decodeList(
+    buffer: Buffer,
+    secret: string,
+    Authenticator: Buffer
+  ) {
     const list = {}
 
     while (buffer.length > 0) {
@@ -33,11 +38,11 @@ export default class Attributes {
         }
 
         const Dict = Attributes.getAttr(typeAttr, vendorId)
-
+        /** @TODO Add more encrypt methods */
         if (Dict.flags && Dict.flags.includes('encrypt=1')) {
           value = Crypt.decode(value, secret, Authenticator)
         }
-
+        /** @TODO Add octets[x] types */
         switch (Dict.type) {
           case 'string':
           case 'text':
@@ -68,6 +73,7 @@ export default class Attributes {
   }
 
   static encodeList(responseAttrs) {
+    /** @TODO Add VSA when encoding */
     let attr_offset = 0
     let attrBuffer = Buffer.alloc(4096)
 
@@ -104,19 +110,11 @@ export default class Attributes {
     return attrBuffer
   }
 
-  static getAttr(id:number|string, vendorId:number= defaultVId) {
+  static getAttr(id:number|string, vendorId:number= defaultVId): IDictionary.DictEntry {
     return Dictionary.get(id, vendorId)
   }
 
   static stripName(attrName:string):string {
     return attrName.replace(/-/g, '')
-  }
-
-  static decodeVsa(buffer:Buffer) {
-    const vendorId = buffer.readUInt32BE(0)
-
-    console.log(vendorId)
-
-    return buffer
   }
 }

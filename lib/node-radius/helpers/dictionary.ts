@@ -1,19 +1,19 @@
 import fs from 'fs'
 import path from 'path'
 import { debug } from './logger'
-import { ICommon } from '../types'
+import { ICommon, IDictionary } from '../types'
 
 const defVendorId:number = -1
 const defVendorName:string = 'Default'
 
 let currentVendor:number = defVendorId
 
-const Dict = new Map()
-const Attr = new Map()
-const Vendor = new Map()
+const Dict:IDictionary.Dict = new Map()
+const Attr:IDictionary.Attr = new Map()
+const Vendor:IDictionary.Vendor = new Map()
 const Locations = [path.normalize(__dirname + '/../dictionary')]
 
-export const get = (id: number|string, vendor: number = -1 ) => {
+export const get = (id: number|string, vendor: number = -1 ): IDictionary.DictEntry => {
   if (!Attr.has(id)) {
     throw new Error(`${id} is unknown attribute`)
   }
@@ -105,7 +105,7 @@ const addAttr: ICommon.SpreadableFn = (vendor, attr, id, type, ...flags) => {
     throw new Error(`Vendor is unknown for VSA attribute ${vendor}, ${attr}`)
   }
 
-  const Entry = {
+  const DictEntry:IDictionary.DictEntry = {
     id,
     name: attr,
     type,
@@ -113,9 +113,15 @@ const addAttr: ICommon.SpreadableFn = (vendor, attr, id, type, ...flags) => {
     values: new Map()
   }
 
-  Dict.get(vendor).set(id, Entry)
-  Attr.set(attr, {id, attr, vendor})
-  Attr.set(id, {id, attr, vendor})
+  const AttrEntry:IDictionary.AttrEntry = {
+    id,
+    attr,
+    vendor
+  }
+
+  Dict.get(vendor).set(id, DictEntry)
+  Attr.set(attr, AttrEntry)
+  Attr.set(id, AttrEntry)
 
   debug('Dictionary Attribute Added', Vendor.get(vendor), id, attr)
 }
@@ -140,7 +146,7 @@ const addAttrValue: ICommon.SpreadableFn = (vendor, attr, value, id) => {
   debug(`${attr} value added:`, value, id)
 }
 
-const addVendor: ICommon.SpreadableFn = (name: String, id: Number) => {
+const addVendor: ICommon.SpreadableFn = (name: string, id: number) => {
   id = Number(id)
 
   if (Vendor.has(id)) {

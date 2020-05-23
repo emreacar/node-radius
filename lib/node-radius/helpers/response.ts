@@ -1,9 +1,5 @@
-import { EventEmitter } from 'events'
 import { debug } from './logger'
-
 import { IResponse } from '../types'
-
-const eventEmitter = new EventEmitter()
 
 const codeRelations: IResponse.RelationMap = {
   1: {
@@ -23,8 +19,9 @@ export default class Response {
   packet: any
   request: any
   code: any
+  socket: any
 
-  constructor(packet) {
+  constructor(packet, socket) {
     let code
 
     // ? Makes the package read-only for secure Incoming Package Data
@@ -39,6 +36,9 @@ export default class Response {
         set: value => (code = this.checkCode(value)),
         get: () => code,
       },
+      socket: {
+        value: socket
+      }
     })
   }
 
@@ -101,11 +101,6 @@ export default class Response {
     this.packet.addAttribute(type, value)
   }
 
-  /** @TODO add remove method for attributes */
-  on(eventName: string, fn: IResponse.SocketListener) {
-    eventEmitter.on(eventName, fn)
-  }
-
   send() {
     if (!this.code) {
       this.reject()
@@ -116,8 +111,7 @@ export default class Response {
 
     const responsePacket = this.packet.encode(this.code)
 
-    eventEmitter.emit(
-      'send',
+    this.socket.send(
       responsePacket,
       this.request.Client.connection.port,
       this.request.Client.ip
