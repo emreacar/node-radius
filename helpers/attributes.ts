@@ -10,11 +10,7 @@ const defaultVId = -1
 export default class Attributes {
   constructor() {}
 
-  static decodeList(
-    buffer: Buffer,
-    secret: string,
-    Authenticator: Buffer
-  ) {
+  static decodeList(buffer: Buffer, secret: string, Authenticator: Buffer) {
     const list = {}
 
     while (buffer.length > 0) {
@@ -61,7 +57,7 @@ export default class Attributes {
         }
 
         list[Attributes.stripName(Dict.name)] = value
-      } catch(e) {
+      } catch (e) {
         debug(e)
       }
 
@@ -110,11 +106,14 @@ export default class Attributes {
     return attrBuffer
   }
 
-  static getAttr(id:number|string, vendorId:number= defaultVId): IDictionary.DictEntry {
+  static getAttr(
+    id: number | string,
+    vendorId: number = defaultVId
+  ): IDictionary.DictEntry {
     return Dictionary.get(id, vendorId)
   }
 
-  static stripName(attrName:string):string {
+  static stripName(attrName: string): string {
     return attrName.replace(/-/g, '')
   }
 }

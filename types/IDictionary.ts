@@ -1,9 +1,9 @@
 export declare namespace IDictionary {
   type DictEntry = {
-    id: number,
-    name: string,
-    type: string,
-    flags?: Array<string>,
+    id: number
+    name: string
+    type: string
+    flags?: Array<string>
     values?: Map<any, any>
   }
 

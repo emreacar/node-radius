@@ -37,8 +37,8 @@ export default class Response {
         get: () => code,
       },
       socket: {
-        value: socket
-      }
+        value: socket,
+      },
     })
   }
 

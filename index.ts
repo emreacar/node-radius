@@ -38,9 +38,7 @@ export default class Radius {
       eventEmitter.emit('error', message)
     }
 
-    Dictionary.load(
-      this.options.dictionary
-    )
+    Dictionary.load(this.options.dictionary)
 
     this._clients = new Map()
     this._handlers = []

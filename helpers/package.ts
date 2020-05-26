@@ -9,7 +9,7 @@ const codeFromId = new Map([
   [5, 'Accounting-Response'],
   [11, 'Access-Challenge'],
   [12, 'Status-Server'],
-  [13, 'Status-Client']
+  [13, 'Status-Client'],
 ])
 
 const codeFromName = new Map(
