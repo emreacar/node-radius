@@ -60,7 +60,7 @@ class Package {
             },
             responseAttrs: {
                 value: [],
-            }
+            },
         });
     }
     addAttribute(type, value) {

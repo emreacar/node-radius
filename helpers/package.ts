@@ -96,7 +96,7 @@ export default class Package {
       },
       responseAttrs: {
         value: [],
-      }
+      },
     })
   }
 
@@ -106,7 +106,7 @@ export default class Package {
    * @param {*} value
    * @TODO add value validation for type
    */
-  addAttribute(type:string, value: any) {
+  addAttribute(type: string, value: any) {
     const attribute = Attributes.getAttr(type)
     if (!attribute) throw Error(`${type} is unknown attribute.`)
 
