@@ -22,7 +22,7 @@
     "radius-nodejs",
     "mikrotik-radius"
   ],
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "start": "nodemon index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
