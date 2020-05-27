@@ -71,6 +71,7 @@ export default class Package {
     const Length = buffer.readUInt16BE(2)
     const CodeId = buffer.readUInt8(0)
     const Code = codeFromId.get(CodeId)
+    const mwEventName = Code.replace('-Request', '')
     const Identifier = buffer[1]
     const Authenticator = buffer.slice(4, 20)
     const Attr = Attributes.decodeList(
@@ -90,6 +91,7 @@ export default class Package {
           Identifier,
           Authenticator,
           Code,
+          mwEventName,
           CodeId,
           Attr,
         },

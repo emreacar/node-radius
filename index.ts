@@ -41,7 +41,10 @@ export default class Radius {
     Dictionary.load(this.options.dictionary)
 
     this._clients = new Map()
-    this._handlers = []
+    this._handlers = {
+      Access: [],
+      Accounting: [],
+    }
   }
   /**
    *
@@ -63,13 +66,25 @@ export default class Radius {
    *
    * @param {Function} middleware
    */
-  use(middleware: ICommon.Middleware) {
+  use(eventName: String = '', middleware: ICommon.Middleware) {
     if (typeof middleware !== 'function') {
       eventEmitter.emit('error', 'Middleware must be a function!')
       process.exit(0)
     }
 
-    this._handlers.push(middleware)
+    const keys = Object.keys(this._handlers)
+
+    if (eventName === '') {
+      keys.forEach(event => {
+        this._handlers[event].push(middleware)
+      })
+    } else if (this._handlers.hasOwnPropery(eventName)) {
+      this._handlers[eventName as PropertyKey].push(middleware)
+    } else {
+      eventEmitter.emit('error', 'Unknown Event Listener. Use only one of theese:', keys)
+
+      process.exit(0)
+    }
   }
 
   getClient({ address, ...connection }: RemoteInfo): IRadius.Client {
@@ -101,8 +116,13 @@ export default class Radius {
           const packet = new Package(buffer, client)
           const request = new Request(packet.request)
           const response = new Response(packet, socket)
+          const mwEventName = packet.request.mwEventName
 
-          const middlewares = [...this._handlers]
+          if (!this._handlers.hasOwnPropery(mwEventName)) {
+            throw new Error(`Unknown Request Type for ${mwEventName}`)
+          }
+
+          const middlewares = [...this._handlers[mwEventName]]
 
           const next = async () => {
             if (middlewares.length) await middlewares.shift()(request, response, next)
