@@ -62,11 +62,8 @@ export default class Radius {
     eventEmitter.on(eventName, callback)
   }
 
-  /**
-   *
-   * @param {Function} middleware
-   */
-  use(eventName: String = '', middleware: ICommon.Middleware) {
+  use(eventName: string = '', middleware: ICommon.Middleware) {
+    console.log(eventName, typeof middleware)
     if (typeof middleware !== 'function') {
       eventEmitter.emit('error', 'Middleware must be a function!')
       process.exit(0)

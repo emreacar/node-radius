@@ -20,7 +20,10 @@ class Radius {
         }
         helpers_1.Dictionary.load(this.options.dictionary);
         this._clients = new Map();
-        this._handlers = [];
+        this._handlers = {
+            Access: [],
+            Accounting: [],
+        };
     }
     addClient(...clients) {
         clients.forEach(client => {
@@ -30,12 +33,25 @@ class Radius {
     addListener(eventName, callback) {
         helpers_1.eventEmitter.on(eventName, callback);
     }
-    use(middleware) {
+    use(eventName = '', middleware) {
+        console.log(eventName, typeof middleware);
         if (typeof middleware !== 'function') {
             helpers_1.eventEmitter.emit('error', 'Middleware must be a function!');
             process.exit(0);
         }
-        this._handlers.push(middleware);
+        const keys = Object.keys(this._handlers);
+        if (eventName === '') {
+            keys.forEach(event => {
+                this._handlers[event].push(middleware);
+            });
+        }
+        else if (this._handlers.hasOwnPropery(eventName)) {
+            this._handlers[eventName].push(middleware);
+        }
+        else {
+            helpers_1.eventEmitter.emit('error', 'Unknown Event Listener. Use only one of theese:', keys);
+            process.exit(0);
+        }
     }
     getClient({ address, ...connection }) {
         const client = this._clients.get(address);
@@ -57,7 +73,11 @@ class Radius {
                     const packet = new helpers_1.Package(buffer, client);
                     const request = new helpers_1.Request(packet.request);
                     const response = new helpers_1.Response(packet, socket);
-                    const middlewares = [...this._handlers];
+                    const mwEventName = packet.request.mwEventName;
+                    if (!this._handlers.hasOwnPropery(mwEventName)) {
+                        throw new Error(`Unknown Request Type for ${mwEventName}`);
+                    }
+                    const middlewares = [...this._handlers[mwEventName]];
                     const next = async () => {
                         if (middlewares.length)
                             await middlewares.shift()(request, response, next);
