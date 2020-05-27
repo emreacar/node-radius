@@ -48,7 +48,7 @@ class Radius {
             this._handlers[eventName].push(middleware);
         }
         else {
-            helpers_1.eventEmitter.emit('error', 'Unknown Event Listener. Use only one of theese:', keys);
+            helpers_1.eventEmitter.emit('error', `Unknown listener for ${eventName}. Use only one of theese: ${keys}`);
             process.exit(0);
         }
     }
@@ -73,7 +73,7 @@ class Radius {
                     const request = new helpers_1.Request(packet.request);
                     const response = new helpers_1.Response(packet, socket);
                     const mwEventName = packet.request.mwEventName;
-                    if (!this._handlers.hasOwnPropery(mwEventName)) {
+                    if (!Object.keys(this._handlers).includes(mwEventName)) {
                         throw new Error(`Unknown Request Type for ${mwEventName}`);
                     }
                     const middlewares = [...this._handlers[mwEventName]];

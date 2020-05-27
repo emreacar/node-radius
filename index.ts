@@ -77,7 +77,10 @@ export default class Radius {
     } else if (keys.includes(eventName)) {
       this._handlers[eventName as PropertyKey].push(middleware)
     } else {
-      eventEmitter.emit('error', 'Unknown Event Listener. Use only one of theese:', keys)
+      eventEmitter.emit(
+        'error',
+        `Unknown listener for ${eventName}. Use only one of theese: ${keys}`
+      )
 
       process.exit(0)
     }
@@ -114,7 +117,7 @@ export default class Radius {
           const response = new Response(packet, socket)
           const mwEventName = packet.request.mwEventName
 
-          if (!this._handlers.hasOwnPropery(mwEventName)) {
+          if (!Object.keys(this._handlers).includes(mwEventName)) {
             throw new Error(`Unknown Request Type for ${mwEventName}`)
           }
 
