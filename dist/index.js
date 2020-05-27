@@ -34,7 +34,6 @@ class Radius {
         helpers_1.eventEmitter.on(eventName, callback);
     }
     use(eventName = '', middleware) {
-        console.log(eventName, typeof middleware);
         if (typeof middleware !== 'function') {
             helpers_1.eventEmitter.emit('error', 'Middleware must be a function!');
             process.exit(0);
@@ -45,7 +44,7 @@ class Radius {
                 this._handlers[event].push(middleware);
             });
         }
-        else if (this._handlers.hasOwnPropery(eventName)) {
+        else if (keys.includes(eventName)) {
             this._handlers[eventName].push(middleware);
         }
         else {

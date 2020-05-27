@@ -63,7 +63,6 @@ export default class Radius {
   }
 
   use(eventName: string = '', middleware: ICommon.Middleware) {
-    console.log(eventName, typeof middleware)
     if (typeof middleware !== 'function') {
       eventEmitter.emit('error', 'Middleware must be a function!')
       process.exit(0)
@@ -75,7 +74,7 @@ export default class Radius {
       keys.forEach(event => {
         this._handlers[event].push(middleware)
       })
-    } else if (this._handlers.hasOwnPropery(eventName)) {
+    } else if (keys.includes(eventName)) {
       this._handlers[eventName as PropertyKey].push(middleware)
     } else {
       eventEmitter.emit('error', 'Unknown Event Listener. Use only one of theese:', keys)
