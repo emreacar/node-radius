@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const logger_1 = require("./logger");
 const dictionary_1 = __importDefault(require("./dictionary"));
 const crypt_1 = __importDefault(require("./crypt"));
+require("../types");
 const VsaId = 26;
 const defaultVId = -1;
 class Attributes {
@@ -47,7 +48,10 @@ class Attributes {
                         value = value.readUInt32BE(0);
                         break;
                 }
-                list[Attributes.stripName(Dict.name)] = value;
+                if (Dict.values && Dict.values.has(value)) {
+                    value = Dict.values.get(value);
+                }
+                list[Attributes.stripName(Dict.attr)] = value;
             }
             catch (e) {
                 logger_1.debug(e);
@@ -59,11 +63,11 @@ class Attributes {
     static encodeList(responseAttrs) {
         let attr_offset = 0;
         let attrBuffer = Buffer.alloc(4096);
-        for (let { attr, value } of responseAttrs) {
-            switch (attr.type) {
+        for (let { attribute, value } of responseAttrs) {
+            switch (attribute.type) {
                 case 'string':
                 case 'text':
-                    value = Buffer.from(value, 'utf8');
+                    value = Buffer.from(value + '', 'utf8');
                     break;
                 case 'ipaddr':
                     value = Buffer.from(value.split('.'));
@@ -73,11 +77,22 @@ class Attributes {
                     break;
                 case 'time':
                 case 'integer':
-                    value = Buffer.alloc(4).writeUInt32BE(value, 0);
+                    const ov = value;
+                    value = Buffer.alloc(4);
+                    value.writeUInt32BE(+ov, 0);
                     break;
             }
-            attr_offset = attrBuffer.writeUInt8(attr.id, attr_offset);
-            attr_offset = attrBuffer.writeUInt8(2 + value.length, attr_offset);
+            if (attribute.vendor === defaultVId) {
+                attr_offset = attrBuffer.writeUInt8(attribute.id, attr_offset);
+                attr_offset = attrBuffer.writeUInt8(2 + value.length, attr_offset);
+            }
+            else {
+                attr_offset = attrBuffer.writeUInt8(VsaId, attr_offset);
+                attr_offset = attrBuffer.writeUInt8(8 + value.length, attr_offset);
+                attr_offset = attrBuffer.writeUInt32BE(attribute.vendor, attr_offset);
+                attr_offset = attrBuffer.writeUInt8(attribute.id, attr_offset);
+                attr_offset = attrBuffer.writeUInt8(2 + value.length, attr_offset);
+            }
             value.copy(attrBuffer, attr_offset);
             attr_offset += value.length;
         }
@@ -89,6 +104,10 @@ class Attributes {
     }
     static stripName(attrName) {
         return attrName.replace(/-/g, '');
+    }
+    static encodeName(attrName) {
+        attrName = Attributes.stripName(attrName);
+        return attrName.match(/[A-Z][a-z]+/g).join('-');
     }
 }
 exports.default = Attributes;

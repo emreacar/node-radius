@@ -1,63 +1,59 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const logger_1 = require("./logger");
-const codeRelations = {
-    1: {
-        accept: { code: 2, name: 'Access-Accept' },
-        reject: { code: 3, name: 'Access-Reject' },
-        default: { code: 3, name: 'Access-Reject' },
-        allows: [2, 3],
-    },
-    4: {
-        default: { code: 5, name: 'Accounting-Response' },
-        allows: [5],
-    },
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+Object.defineProperty(exports, "__esModule", { value: true });
+const package_1 = __importDefault(require("./package"));
+const dictionary_1 = __importDefault(require("./dictionary"));
+const code_1 = __importDefault(require("./code"));
+const logger_1 = require("./logger");
 class Response {
-    constructor(packet, socket) {
+    constructor(request, socket) {
         let code;
         Object.defineProperties(this, {
-            packet: {
-                value: packet,
-            },
             request: {
-                value: packet.request,
+                value: request
             },
             code: {
-                set: value => (code = this.checkCode(value)),
                 get: () => code,
+                set: value => (code = code_1.default.get(value))
             },
             socket: {
-                value: socket,
+                value: socket
             },
+            data: {
+                value: []
+            }
         });
     }
-    checkCode(code) {
-        const codeId = this.packet.getCodeId(code);
-        const reqCodeId = this.request.CodeId;
-        if (!codeId)
-            throw Error(`${code}: Code is invalid`);
-        if (!codeRelations[reqCodeId] || !codeRelations[reqCodeId].allows.includes(codeId)) {
-            throw Error(`You can not response with ${code} to ${this.packet.getCodeName(reqCodeId)} package.`);
+    add(type, value) {
+        const attribute = dictionary_1.default.get(type);
+        if (!attribute) {
+            throw Error(`${type} is unknown attribute...`);
         }
-        return code;
+        this.data.push({
+            attribute,
+            value
+        });
+    }
+    checkCode() {
+        const canResponse = code_1.default.canResponseWith(this.request.code.id, this.code.id);
+        if (!canResponse) {
+            throw Error(`You can not response with ${this.code.name} to ${this.request.code.name} package.`);
+        }
+        return canResponse;
     }
     reject(sendAfter = false) {
-        const reqCodeId = this.request.CodeId;
-        const Code = codeRelations[reqCodeId].reject || codeRelations[reqCodeId].default;
-        this.code = Code.name;
+        const reqCode = this.request.code;
+        this.code = code_1.default.rejectOf(reqCode.id);
         if (sendAfter)
             this.send();
     }
     accept(sendAfter = false) {
-        const reqCodeId = this.request.CodeId;
-        const Code = codeRelations[reqCodeId].accept || codeRelations[reqCodeId].default;
-        this.code = Code.name;
+        const reqCode = this.request.code;
+        this.code = code_1.default.acceptOf(reqCode.id);
         if (sendAfter)
             this.send();
-    }
-    add(type, value) {
-        this.packet.addAttribute(type, value);
     }
     send() {
         if (!this.code) {
@@ -65,8 +61,10 @@ class Response {
             logger_1.debug(`You should define a response code!`);
             logger_1.debug(`Request will automatically responded (${this.code}) code.`);
         }
-        const responsePacket = this.packet.encode(this.code);
-        this.socket.send(responsePacket, this.request.Client.connection.port, this.request.Client.ip);
+        this.checkCode();
+        const { identifier, authenticator, client } = this.request;
+        const responsePacket = package_1.default.toBuffer(this.code, identifier, authenticator, this.data, client);
+        this.socket.send(responsePacket, client.connection.port, client.ip);
     }
 }
 exports.default = Response;

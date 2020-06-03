@@ -1,12 +1,4 @@
-import {
-  Request,
-  Response,
-  Dictionary,
-  Package,
-  logger,
-  listen,
-  eventEmitter,
-} from './helpers'
+import { Package, Response, Dictionary, logger, listen, eventEmitter } from './helpers'
 
 import { RemoteInfo } from 'dgram'
 import { IRadius, ICommon } from './types'
@@ -21,7 +13,7 @@ export default class Radius {
       authorizationPort: 1812,
       accountingPort: 1813,
       dictionary: [],
-      ...customOptions,
+      ...customOptions
     }
 
     /** Default EventEmitter for Errors */
@@ -43,7 +35,7 @@ export default class Radius {
     this._clients = new Map()
     this._handlers = {
       Access: [],
-      Accounting: [],
+      Accounting: []
     }
   }
   /**
@@ -112,10 +104,9 @@ export default class Radius {
         }
 
         try {
-          const packet = new Package(buffer, client)
-          const request = new Request(packet.request)
-          const response = new Response(packet, socket)
-          const mwEventName = packet.request.mwEventName
+          const request = Package.fromBuffer(buffer, client)
+          const response = new Response(request, socket)
+          const mwEventName = request.code.eventName
 
           if (!Object.keys(this._handlers).includes(mwEventName)) {
             throw new Error(`Unknown Request Type for ${mwEventName}`)

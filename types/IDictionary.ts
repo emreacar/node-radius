@@ -1,16 +1,17 @@
 export declare namespace IDictionary {
-  type DictEntry = {
-    id: number
-    name: string
-    type: string
-    flags?: Array<string>
-    values?: Map<any, any>
-  }
-
   type AttrEntry = {
     id: number
     attr: string
     vendor: number
+  }
+
+  type DictEntry = {
+    id: number
+    attr: string
+    vendor: number
+    type: string
+    flags?: Array<string>
+    values?: Map<any, any>
   }
 
   type Attr = Map<any, AttrEntry>

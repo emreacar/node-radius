@@ -1,13 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const helpers_1 = require("./helpers");
+require("dgram");
+require("./types");
 class Radius {
     constructor(customOptions = {}) {
         this.options = {
             authorizationPort: 1812,
             accountingPort: 1813,
             dictionary: [],
-            ...customOptions,
+            ...customOptions
         };
         helpers_1.eventEmitter.on('error', error => {
             helpers_1.logger.error('Error On Init:', error);
@@ -22,7 +24,7 @@ class Radius {
         this._clients = new Map();
         this._handlers = {
             Access: [],
-            Accounting: [],
+            Accounting: []
         };
     }
     addClient(...clients) {
@@ -69,10 +71,9 @@ class Radius {
                     return;
                 }
                 try {
-                    const packet = new helpers_1.Package(buffer, client);
-                    const request = new helpers_1.Request(packet.request);
-                    const response = new helpers_1.Response(packet, socket);
-                    const mwEventName = packet.request.mwEventName;
+                    const request = helpers_1.Package.fromBuffer(buffer, client);
+                    const response = new helpers_1.Response(request, socket);
+                    const mwEventName = request.code.eventName;
                     if (!Object.keys(this._handlers).includes(mwEventName)) {
                         throw new Error(`Unknown Request Type for ${mwEventName}`);
                     }

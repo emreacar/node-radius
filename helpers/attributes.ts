@@ -56,7 +56,11 @@ export default class Attributes {
             break
         }
 
-        list[Attributes.stripName(Dict.name)] = value
+        if (Dict.values && Dict.values.has(value)) {
+          value = Dict.values.get(value)
+        }
+
+        list[Attributes.stripName(Dict.attr)] = value
       } catch (e) {
         debug(e)
       }
@@ -69,16 +73,15 @@ export default class Attributes {
   }
 
   static encodeList(responseAttrs) {
-    /** @TODO Add VSA when encoding */
     let attr_offset = 0
     let attrBuffer = Buffer.alloc(4096)
 
-    for (let { attr, value } of responseAttrs) {
+    for (let { attribute, value } of responseAttrs) {
       /** @TODO Add Other Types */
-      switch (attr.type) {
+      switch (attribute.type) {
         case 'string':
         case 'text':
-          value = Buffer.from(value, 'utf8')
+          value = Buffer.from(value + '', 'utf8')
           break
 
         case 'ipaddr':
@@ -91,12 +94,22 @@ export default class Attributes {
 
         case 'time':
         case 'integer':
-          value = Buffer.alloc(4).writeUInt32BE(value, 0)
+          const ov = value
+          value = Buffer.alloc(4)
+          value.writeUInt32BE(+ov, 0)
           break
       }
+      if (attribute.vendor === defaultVId) {
+        attr_offset = attrBuffer.writeUInt8(attribute.id, attr_offset)
+        attr_offset = attrBuffer.writeUInt8(2 + value.length, attr_offset)
+      } else {
+        attr_offset = attrBuffer.writeUInt8(VsaId, attr_offset)
+        attr_offset = attrBuffer.writeUInt8(8 + value.length, attr_offset)
+        attr_offset = attrBuffer.writeUInt32BE(attribute.vendor, attr_offset)
+        attr_offset = attrBuffer.writeUInt8(attribute.id, attr_offset)
+        attr_offset = attrBuffer.writeUInt8(2 + value.length, attr_offset)
+      }
 
-      attr_offset = attrBuffer.writeUInt8(attr.id, attr_offset)
-      attr_offset = attrBuffer.writeUInt8(2 + value.length, attr_offset)
       value.copy(attrBuffer, attr_offset)
       attr_offset += value.length
     }
@@ -115,5 +128,10 @@ export default class Attributes {
 
   static stripName(attrName: string): string {
     return attrName.replace(/-/g, '')
+  }
+
+  static encodeName(attrName: string): string {
+    attrName = Attributes.stripName(attrName)
+    return attrName.match(/[A-Z][a-z]+/g).join('-')
   }
 }

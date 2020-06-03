@@ -1,62 +1,67 @@
+import Packet from './package'
+import Dictionary from './dictionary'
+import Code from './code'
 import { debug } from './logger'
-import { IResponse } from '../types'
-
-const codeRelations: IResponse.RelationMap = {
-  1: {
-    accept: { code: 2, name: 'Access-Accept' },
-    reject: { code: 3, name: 'Access-Reject' },
-    default: { code: 3, name: 'Access-Reject' },
-    allows: [2, 3],
-  },
-
-  4: {
-    default: { code: 5, name: 'Accounting-Response' },
-    allows: [5],
-  },
-}
 
 export default class Response {
-  packet: any
   request: any
   code: any
   socket: any
+  data: any
 
-  constructor(packet, socket) {
+  constructor(request, socket) {
     let code
 
-    // ? Makes the package read-only for secure Incoming Package Data
     Object.defineProperties(this, {
-      packet: {
-        value: packet,
-      },
       request: {
-        value: packet.request,
+        value: request
       },
+
       code: {
-        set: value => (code = this.checkCode(value)),
         get: () => code,
+        set: value => (code = Code.get(value))
       },
+
       socket: {
-        value: socket,
+        value: socket
       },
+
+      data: {
+        value: []
+      }
     })
   }
 
-  checkCode(code) {
-    const codeId = this.packet.getCodeId(code)
-    const reqCodeId = this.request.CodeId
+  /**
+   *
+   * @param {String} attr
+   * @param {any} value
+   * @description Add Response Attrs depends on loaded dictionaries
+   * @example add('Framed-IP-Address', '192.168.3.3')
+   */
+  add(type, value) {
+    const attribute = Dictionary.get(type)
 
-    if (!codeId) throw Error(`${code}: Code is invalid`)
+    if (!attribute) {
+      throw Error(`${type} is unknown attribute...`)
+    }
 
-    if (!codeRelations[reqCodeId] || !codeRelations[reqCodeId].allows.includes(codeId)) {
+    this.data.push({
+      attribute,
+      value
+    })
+  }
+
+  checkCode() {
+    const canResponse = Code.canResponseWith(this.request.code.id, this.code.id)
+
+    if (!canResponse) {
       throw Error(
-        `You can not response with ${code} to ${this.packet.getCodeName(
-          reqCodeId
-        )} package.`
+        `You can not response with ${this.code.name} to ${this.request.code.name} package.`
       )
     }
 
-    return code
+    return canResponse
   }
 
   /**
@@ -66,10 +71,8 @@ export default class Response {
    * @description if set true, after set response code, it will send response automatically.
    */
   reject(sendAfter = false) {
-    const reqCodeId = this.request.CodeId
-    const Code = codeRelations[reqCodeId].reject || codeRelations[reqCodeId].default
-
-    this.code = Code.name
+    const reqCode = this.request.code
+    this.code = Code.rejectOf(reqCode.id)
 
     if (sendAfter) this.send()
   }
@@ -81,24 +84,10 @@ export default class Response {
    * @description if set true, after set response code, it will send response automatically.
    */
   accept(sendAfter = false) {
-    const reqCodeId = this.request.CodeId
-    const Code = codeRelations[reqCodeId].accept || codeRelations[reqCodeId].default
-
-    this.code = Code.name
+    const reqCode = this.request.code
+    this.code = Code.acceptOf(reqCode.id)
 
     if (sendAfter) this.send()
-  }
-
-  /**
-   *
-   * @param {String} attr
-   * @param {any} value
-   * @return {Boolean|Error}
-   * @description Add Response Attrs depends on loaded dictionaries
-   * @example set('Framed-IP-Address', '192.168.3.3')
-   */
-  add(type, value) {
-    this.packet.addAttribute(type, value)
   }
 
   send() {
@@ -109,12 +98,17 @@ export default class Response {
       debug(`Request will automatically responded (${this.code}) code.`)
     }
 
-    const responsePacket = this.packet.encode(this.code)
+    this.checkCode()
 
-    this.socket.send(
-      responsePacket,
-      this.request.Client.connection.port,
-      this.request.Client.ip
+    const { identifier, authenticator, client } = this.request
+    const responsePacket = Packet.toBuffer(
+      this.code,
+      identifier,
+      authenticator,
+      this.data,
+      client
     )
+
+    this.socket.send(responsePacket, client.connection.port, client.ip)
   }
 }

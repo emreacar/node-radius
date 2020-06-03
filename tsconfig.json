@@ -9,7 +9,9 @@
 
     "sourceMap": true,
     "removeComments": true,
-    "noUnusedLocals": true,
+    "importsNotUsedAsValues": "preserve",
+    "allowSyntheticDefaultImports": true,
+    // "noUnusedLocals": true,
     // "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

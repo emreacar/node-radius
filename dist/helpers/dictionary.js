@@ -7,6 +7,7 @@ exports.get = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const logger_1 = require("./logger");
+require("../types");
 const defVendorId = -1;
 const defVendorName = 'Default';
 let currentVendor = defVendorId;
@@ -15,6 +16,12 @@ const Attr = new Map();
 const Vendor = new Map();
 const Locations = [path_1.default.normalize(__dirname + '/../dictionary')];
 exports.get = (id, vendor = -1) => {
+    if (typeof id === 'string') {
+        id = id
+            .replace(/-/g, '')
+            .match(/[A-Z][a-z]+/g)
+            .join('-');
+    }
     if (!Attr.has(id)) {
         throw new Error(`${id} is unknown attribute`);
     }
@@ -89,17 +96,16 @@ const addAttr = (vendor, attr, id, type, ...flags) => {
     if (vendor !== defVendorId && !Dict.has(vendor)) {
         throw new Error(`Vendor is unknown for VSA attribute ${vendor}, ${attr}`);
     }
-    const DictEntry = {
-        id,
-        name: attr,
-        type,
-        flags: [...flags],
-        values: new Map(),
-    };
     const AttrEntry = {
         id,
         attr,
-        vendor,
+        vendor
+    };
+    const DictEntry = {
+        ...AttrEntry,
+        type,
+        flags: [...flags],
+        values: new Map()
     };
     Dict.get(vendor).set(id, DictEntry);
     Attr.set(attr, AttrEntry);
@@ -117,6 +123,7 @@ const addAttrValue = (vendor, attr, value, id) => {
     if (!Dict.has(attribute.vendor) || !Dict.get(attribute.vendor).has(attribute.id)) {
         throw new Error(`Unknown Attribute Value for ${Vendor.get(vendor)} -> ${attr}`);
     }
+    id = Number(id);
     Dict.get(attribute.vendor).get(attribute.id).values.set(id, value);
     Dict.get(attribute.vendor).get(attribute.id).values.set(value, id);
     logger_1.debug(`${attr} value added:`, value, id);
@@ -141,6 +148,6 @@ addVendor(defVendorName, defVendorId);
 exports.default = {
     get: exports.get,
     add,
-    load,
+    load
 };
 //# sourceMappingURL=dictionary.js.map

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dgram_1 = require("dgram");
 const eventEmitter_1 = __importDefault(require("./eventEmitter"));
 const logger_1 = require("./logger");
+require("../types");
 const listen = (type, targetPort) => {
     const socket = dgram_1.createSocket('udp4');
     socket.on('error', err => {

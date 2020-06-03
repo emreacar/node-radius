@@ -12,6 +12,6 @@ exports.debug = debug_1.default('debug');
 exports.default = {
     error: exports.error,
     info: exports.info,
-    debug: exports.debug,
+    debug: exports.debug
 };
 //# sourceMappingURL=logger.js.map

@@ -14,6 +14,13 @@ const Vendor: IDictionary.Vendor = new Map()
 const Locations = [path.normalize(__dirname + '/../dictionary')]
 
 export const get = (id: number | string, vendor: number = -1): IDictionary.DictEntry => {
+  if (typeof id === 'string') {
+    id = (id as string)
+      .replace(/-/g, '')
+      .match(/[A-Z][a-z]+/g)
+      .join('-')
+  }
+
   if (!Attr.has(id)) {
     throw new Error(`${id} is unknown attribute`)
   }
@@ -105,18 +112,17 @@ const addAttr: ICommon.SpreadableFn = (vendor, attr, id, type, ...flags) => {
     throw new Error(`Vendor is unknown for VSA attribute ${vendor}, ${attr}`)
   }
 
-  const DictEntry: IDictionary.DictEntry = {
-    id,
-    name: attr,
-    type,
-    flags: [...flags],
-    values: new Map(),
-  }
-
   const AttrEntry: IDictionary.AttrEntry = {
     id,
     attr,
-    vendor,
+    vendor
+  }
+
+  const DictEntry: IDictionary.DictEntry = {
+    ...AttrEntry,
+    type,
+    flags: [...flags],
+    values: new Map()
   }
 
   Dict.get(vendor).set(id, DictEntry)
@@ -142,7 +148,7 @@ const addAttrValue: ICommon.SpreadableFn = (vendor, attr, value, id) => {
   if (!Dict.has(attribute.vendor) || !Dict.get(attribute.vendor).has(attribute.id)) {
     throw new Error(`Unknown Attribute Value for ${Vendor.get(vendor)} -> ${attr}`)
   }
-
+  id = Number(id)
   Dict.get(attribute.vendor).get(attribute.id).values.set(id, value)
   Dict.get(attribute.vendor).get(attribute.id).values.set(value, id)
   debug(`${attr} value added:`, value, id)
@@ -175,5 +181,5 @@ addVendor(defVendorName, defVendorId)
 export default {
   get,
   add,
-  load,
+  load
 }

@@ -15,5 +15,5 @@ export const debug = logger('debug')
 export default {
   error,
   info,
-  debug,
+  debug
 }
