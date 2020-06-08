@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./../types");
 const crypto_1 = __importDefault(require("crypto"));
-require("dgram");
 const listen_1 = require("./listen");
 const logger_1 = require("./logger");
 const attributes_1 = __importDefault(require("./attributes"));

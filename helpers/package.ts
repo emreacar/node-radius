@@ -1,6 +1,5 @@
 import { ICode } from './../types'
 import crypto from 'crypto'
-import { createSocket } from 'dgram'
 import { getSock } from './listen'
 import { debug } from './logger'
 import Attributes from './attributes'
