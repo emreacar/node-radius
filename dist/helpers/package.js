@@ -140,7 +140,8 @@ class Package {
     static fromRequest(request) {
         const { code, identifier, authenticator, client } = request;
         const resCode = code_1.default.rejectOf(code.id);
-        const packet = new Package(resCode.id, identifier, authenticator, client);
+        let resCodeId = resCode.id || 0;
+        const packet = new Package(resCodeId, identifier, authenticator, client);
         Object.defineProperties(packet, {
             requestCode: {
                 value: code
