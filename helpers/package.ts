@@ -33,7 +33,7 @@ export default class Package {
   ) {
     code = Code.validate(code)
     identifier = identifierCheck(identifier)
-    console.log(code)
+
     Object.defineProperties(this, {
       code: {
         get: () => code,

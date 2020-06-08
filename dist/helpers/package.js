@@ -20,7 +20,6 @@ class Package {
     constructor(code = null, identifier = null, authenticator = null, client = {}, attr = {}) {
         code = code_1.default.validate(code);
         identifier = identifierCheck(identifier);
-        console.log(code);
         Object.defineProperties(this, {
             code: {
                 get: () => code,
