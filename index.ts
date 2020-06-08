@@ -1,6 +1,5 @@
-import { Package, Response, Dictionary, logger, listen, eventEmitter } from './helpers'
-
-import { RemoteInfo } from 'dgram'
+import { Package, Dictionary, logger, listen, eventEmitter } from './helpers'
+import { RemoteInfo, Socket } from 'dgram'
 import { IRadius, ICommon } from './types'
 
 export default class Radius {
@@ -12,14 +11,19 @@ export default class Radius {
     this.options = {
       authorizationPort: 1812,
       accountingPort: 1813,
+      requestPort: 16379,
       dictionary: [],
       ...customOptions
     }
 
-    /** Default EventEmitter for Errors */
+    /** Default EventEmitters */
     eventEmitter.on('error', error => {
       logger.error('Error On Init:', error)
       process.exit(0)
+    })
+
+    eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
+      this.handleIncoming(socket, buffer, rinfo)
     })
 
     const { authorizationPort, accountingPort } = this.options
@@ -29,13 +33,19 @@ export default class Radius {
 
       eventEmitter.emit('error', message)
     }
-
+    /**
+     * @TODO Create metod for load
+     */
     Dictionary.load(this.options.dictionary)
 
     this._clients = new Map()
     this._handlers = {
-      Access: [],
-      Accounting: []
+      'Access-Request': [],
+      'Accounting-Request': [],
+      'CoA-ACK': [],
+      'CoA-NAK': [],
+      'Disconnect-ACK': [],
+      'Disconnect-NAK': []
     }
   }
   /**
@@ -46,6 +56,13 @@ export default class Radius {
    */
   addClient(...clients: IRadius.ClientRegistry[]) {
     clients.forEach(client => {
+      if (typeof client.ip !== 'string') {
+        eventEmitter.emit(
+          'error',
+          `Client IP Must be String, ${typeof client.ip} given in.`
+        )
+      }
+
       this._clients.set(client.ip, client)
     })
   }
@@ -54,13 +71,21 @@ export default class Radius {
     eventEmitter.on(eventName, callback)
   }
 
-  use(eventName: string = '', middleware: ICommon.Middleware) {
+  use(eventName: string | ICommon.Middleware, middleware: ICommon.Middleware = () => {}) {
     if (typeof middleware !== 'function') {
       eventEmitter.emit('error', 'Middleware must be a function!')
       process.exit(0)
     }
 
     const keys = Object.keys(this._handlers)
+
+    if (typeof eventName === 'function') {
+      /**
+       * @description Allow server.use(function() => {})... sort hand
+       */
+      middleware = eventName
+      eventName = ''
+    }
 
     if (eventName === '') {
       keys.forEach(event => {
@@ -78,52 +103,52 @@ export default class Radius {
     }
   }
 
-  getClient({ address, ...connection }: RemoteInfo): IRadius.Client {
+  setClient({ address, ...connection }: RemoteInfo, socket: Socket): IRadius.Client {
     const client = this._clients.get(address)
 
-    if (client) client.connection = { ...connection }
+    if (client) {
+      client.connection = { ...connection }
+      client.socket = socket
+    }
 
     return client || false
   }
 
   start() {
-    const sockets = ['authorization', 'accounting']
+    const sockets = ['authorization', 'accounting', 'request']
 
-    sockets.forEach(type => {
-      const socket = listen(type, this.options[type + 'Port'])
+    sockets.forEach(type => listen(type, this.options[type + 'Port']))
+  }
 
-      socket.on('message', async (buffer, rinfo) => {
-        const client = this.getClient(rinfo)
+  async handleIncoming(socket, buffer, rinfo) {
+    try {
+      const client = this.setClient(rinfo, socket)
 
-        if (!client) {
-          logger.debug(
-            rinfo.address,
-            `There is no client in known clients. Connection terminated`
-          )
-          return
-        }
+      if (!client) {
+        logger.debug(
+          rinfo.address,
+          `There is no client in known clients. Connection terminated`
+        )
+        return
+      }
 
-        try {
-          const request = Package.fromBuffer(buffer, client)
-          const response = new Response(request, socket)
-          const mwEventName = request.code.eventName
+      const request = Package.fromBuffer(buffer, client)
+      const response = Package.fromRequest(request)
 
-          if (!Object.keys(this._handlers).includes(mwEventName)) {
-            throw new Error(`Unknown Request Type for ${mwEventName}`)
-          }
+      if (!Object.keys(this._handlers).includes(request.code.name)) {
+        throw new Error(`Unknown Request Type for ${request.code.name}`)
+      }
 
-          const middlewares = [...this._handlers[mwEventName]]
+      const middlewares = [...this._handlers[request.code.name]]
 
-          const next = async () => {
-            if (middlewares.length) await middlewares.shift()(request, response, next)
-          }
+      const next = async () => {
+        if (middlewares.length) await middlewares.shift()(request, response, next)
+      }
 
-          await next()
-        } catch (e) {
-          logger.debug('Incoming Message Error:', e)
-          return
-        }
-      })
-    })
+      await next()
+    } catch (e) {
+      logger.debug('Incoming Message Error:', e)
+      return
+    }
   }
 }

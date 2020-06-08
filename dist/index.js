@@ -8,12 +8,16 @@ class Radius {
         this.options = {
             authorizationPort: 1812,
             accountingPort: 1813,
+            requestPort: 16379,
             dictionary: [],
             ...customOptions
         };
         helpers_1.eventEmitter.on('error', error => {
             helpers_1.logger.error('Error On Init:', error);
             process.exit(0);
+        });
+        helpers_1.eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
+            this.handleIncoming(socket, buffer, rinfo);
         });
         const { authorizationPort, accountingPort } = this.options;
         if (authorizationPort === accountingPort) {
@@ -23,24 +27,35 @@ class Radius {
         helpers_1.Dictionary.load(this.options.dictionary);
         this._clients = new Map();
         this._handlers = {
-            Access: [],
-            Accounting: []
+            'Access-Request': [],
+            'Accounting-Request': [],
+            'CoA-ACK': [],
+            'CoA-NAK': [],
+            'Disconnect-ACK': [],
+            'Disconnect-NAK': []
         };
     }
     addClient(...clients) {
         clients.forEach(client => {
+            if (typeof client.ip !== 'string') {
+                helpers_1.eventEmitter.emit('error', `Client IP Must be String, ${typeof client.ip} given in.`);
+            }
             this._clients.set(client.ip, client);
         });
     }
     addListener(eventName, callback) {
         helpers_1.eventEmitter.on(eventName, callback);
     }
-    use(eventName = '', middleware) {
+    use(eventName, middleware = () => { }) {
         if (typeof middleware !== 'function') {
             helpers_1.eventEmitter.emit('error', 'Middleware must be a function!');
             process.exit(0);
         }
         const keys = Object.keys(this._handlers);
+        if (typeof eventName === 'function') {
+            middleware = eventName;
+            eventName = '';
+        }
         if (eventName === '') {
             keys.forEach(event => {
                 this._handlers[event].push(middleware);
@@ -54,42 +69,41 @@ class Radius {
             process.exit(0);
         }
     }
-    getClient({ address, ...connection }) {
+    setClient({ address, ...connection }, socket) {
         const client = this._clients.get(address);
-        if (client)
+        if (client) {
             client.connection = { ...connection };
+            client.socket = socket;
+        }
         return client || false;
     }
     start() {
-        const sockets = ['authorization', 'accounting'];
-        sockets.forEach(type => {
-            const socket = helpers_1.listen(type, this.options[type + 'Port']);
-            socket.on('message', async (buffer, rinfo) => {
-                const client = this.getClient(rinfo);
-                if (!client) {
-                    helpers_1.logger.debug(rinfo.address, `There is no client in known clients. Connection terminated`);
-                    return;
-                }
-                try {
-                    const request = helpers_1.Package.fromBuffer(buffer, client);
-                    const response = new helpers_1.Response(request, socket);
-                    const mwEventName = request.code.eventName;
-                    if (!Object.keys(this._handlers).includes(mwEventName)) {
-                        throw new Error(`Unknown Request Type for ${mwEventName}`);
-                    }
-                    const middlewares = [...this._handlers[mwEventName]];
-                    const next = async () => {
-                        if (middlewares.length)
-                            await middlewares.shift()(request, response, next);
-                    };
-                    await next();
-                }
-                catch (e) {
-                    helpers_1.logger.debug('Incoming Message Error:', e);
-                    return;
-                }
-            });
-        });
+        const sockets = ['authorization', 'accounting', 'request'];
+        sockets.forEach(type => helpers_1.listen(type, this.options[type + 'Port']));
+    }
+    async handleIncoming(socket, buffer, rinfo) {
+        try {
+            const client = this.setClient(rinfo, socket);
+            if (!client) {
+                helpers_1.logger.debug(rinfo.address, `There is no client in known clients. Connection terminated`);
+                return;
+            }
+            const request = helpers_1.Package.fromBuffer(buffer, client);
+            const response = helpers_1.Package.fromRequest(request);
+            if (!Object.keys(this._handlers).includes(request.code.name)) {
+                throw new Error(`Unknown Request Type for ${request.code.name}`);
+            }
+            const middlewares = [...this._handlers[request.code.name]];
+            const next = async () => {
+                if (middlewares.length)
+                    await middlewares.shift()(request, response, next);
+            };
+            await next();
+        }
+        catch (e) {
+            helpers_1.logger.debug('Incoming Message Error:', e);
+            return;
+        }
     }
 }
 exports.default = Radius;

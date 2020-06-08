@@ -5,60 +5,86 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./../types");
 const crypto_1 = __importDefault(require("crypto"));
+require("dgram");
+const listen_1 = require("./listen");
+const logger_1 = require("./logger");
 const attributes_1 = __importDefault(require("./attributes"));
-require("./dictionary");
+const dictionary_1 = __importDefault(require("./dictionary"));
 const code_1 = __importDefault(require("./code"));
+const identifierCheck = identifier => {
+    if (typeof identifier !== 'number' || Number(identifier) < 0) {
+        throw new Error(`Packet Identifier must be unsigned integer. ${typeof identifier} given in.`);
+    }
+    return identifier;
+};
 class Package {
-    constructor(code, identifier, authenticator, attr, client) {
-        code = code_1.default.get(code);
+    constructor(code = null, identifier = null, authenticator = null, client = {}, attr = {}) {
+        code = code_1.default.validate(code);
+        identifier = identifierCheck(identifier);
+        console.log(code);
         Object.defineProperties(this, {
             code: {
                 get: () => code,
-                set: value => (code = code_1.default.get(value))
+                set: value => (code = code_1.default.validate(value))
             },
             identifier: {
-                value: identifier
+                get: () => identifier,
+                set: value => (identifier = identifierCheck(value))
             },
             authenticator: {
                 get: () => authenticator.slice(0),
                 set: value => (authenticator = value)
             },
-            data: {
+            attr: {
                 value: attr
             },
-            client: {
-                value: client
-            },
-            responseAttrs: {
+            responseAttr: {
                 value: []
+            },
+            client: {
+                value: client,
+                writable: true
             }
         });
     }
-    static fromBuffer(buffer, client) {
-        if (buffer.length < 20) {
-            throw new Error(`PACKAGE too short from ${client.address}`);
-        }
-        if (buffer.length < buffer.readUInt16BE(2)) {
-            throw new Error(`Package sizes do not mismatch`);
-        }
-        const length = buffer.readUInt16BE(2);
-        const code = buffer.readUInt8(0);
-        const identifier = buffer[1];
-        const authenticator = buffer.slice(4, 20);
-        const attr = attributes_1.default.decodeList(buffer.slice(20, length), client.secret, authenticator);
-        return new Package(code, identifier, authenticator, attr, client);
+    reject(sendAfter = false) {
+        this.code = code_1.default.rejectOf(this.requestCode.id);
+        if (sendAfter)
+            this.send();
     }
-    static toBuffer(code, identifier, authenticator, attr, client) {
+    accept(sendAfter = false) {
+        this.code = code_1.default.acceptOf(this.requestCode.id);
+        if (sendAfter)
+            this.send();
+    }
+    checkCode() {
+        const canResponse = code_1.default.canResponseWith(this.requestCode.id, this.code.id);
+        if (!canResponse) {
+            throw Error(`You can not response to the ${this.requestCode.name} with the ${this.code.name} code.`);
+        }
+        return canResponse;
+    }
+    add(type, value) {
+        const attribute = dictionary_1.default.get(type);
+        if (!attribute) {
+            throw Error(`${type} is unknown attribute...`);
+        }
+        this.responseAttr.push({
+            attribute,
+            value
+        });
+    }
+    toBuffer() {
         let offset = 0;
         let BufferData = Buffer.alloc(4096);
-        offset = BufferData.writeUInt8(code.id, 0);
-        offset = BufferData.writeUInt8(identifier, offset);
+        offset = BufferData.writeUInt8(this.code.id, 0);
+        offset = BufferData.writeUInt8(this.identifier, offset);
         const length_offset = offset;
         offset = BufferData.writeUInt16BE(0, offset);
         const authenticator_offset = offset;
-        authenticator.copy(BufferData, offset);
+        this.authenticator.copy(BufferData, offset);
         offset += 16;
-        const attrBuffer = attributes_1.default.encodeList(attr);
+        const attrBuffer = attributes_1.default.encodeList(this.responseAttr);
         attrBuffer.copy(BufferData, offset);
         offset += attrBuffer.length;
         const packageLength = offset;
@@ -67,11 +93,69 @@ class Package {
         const hash = crypto_1.default
             .createHash('md5')
             .update(BufferData)
-            .update(client.secret)
+            .update(this.client.secret)
             .digest('binary');
         const AuthenticationBuffer = Buffer.from(hash, 'binary');
         AuthenticationBuffer.copy(BufferData, authenticator_offset);
         return BufferData;
+    }
+    setClient(client) {
+        this.client = { ...client };
+    }
+    send() {
+        if (!this.code) {
+            this.reject();
+            logger_1.debug(`You should define a response code!`);
+            logger_1.debug(`The request will be responded automatically with the (${this.code}) code.`);
+        }
+        if (this.requestCode)
+            this.checkCode();
+        if (Object.keys(this.client).length === 0) {
+            throw new Error('You must select a client to be able to send packages.');
+        }
+        const responsePacket = this.toBuffer();
+        const { socket, connection } = this.client;
+        if (this.requestCode) {
+            socket.send(responsePacket, connection.port, this.client.ip);
+        }
+        else {
+            const requestSocket = listen_1.getSock('request');
+            requestSocket.send(responsePacket, this.client.requestPort, this.client.ip);
+        }
+    }
+    static fromBuffer(buffer, client) {
+        if (buffer.length < 20) {
+            throw new Error(`PACKAGE too short from ${client.address}`);
+        }
+        if (buffer.length < buffer.readUInt16BE(2)) {
+            throw new Error(`Package sizes do not mismatch with length`);
+        }
+        const length = buffer.readUInt16BE(2);
+        const code = buffer.readUInt8(0);
+        const identifier = buffer[1];
+        const authenticator = buffer.slice(4, 20);
+        const attr = attributes_1.default.decodeList(buffer.slice(20, length), client.secret, authenticator);
+        return new Package(code, identifier, authenticator, client, attr);
+    }
+    static fromRequest(request) {
+        const { code, identifier, authenticator, client } = request;
+        const resCode = code_1.default.rejectOf(code.id);
+        const packet = new Package(resCode.id, identifier, authenticator, client);
+        Object.defineProperties(packet, {
+            requestCode: {
+                value: code
+            }
+        });
+        return packet;
+    }
+    create(code) {
+        if (!code || !code_1.default.get(code)) {
+            throw Error(`${code} is unknown`);
+        }
+        const identifier = Math.floor(Math.random() * 256);
+        const authenticator = Buffer.alloc(16);
+        authenticator.fill(0x00);
+        return new Package(code, identifier, authenticator);
     }
 }
 exports.default = Package;

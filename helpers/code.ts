@@ -20,7 +20,6 @@ const codes: ICode.Code = [
 const CodeDict = new Map()
 
 codes.forEach(value => {
-  value.eventName = value.name.replace('-Request', '')
   CodeDict.set(value.id, value)
   CodeDict.set(value.name, value)
 })
@@ -30,18 +29,30 @@ const Code = {
     return CodeDict.get(value)
   },
 
-  rejectOf: (id: number): number => {
+  validate: (value): ICode.CodeEntry => {
+    if (Number.isInteger(value) || typeof value === 'string') {
+      value = Code.get(value)
+    } else if (value.id) {
+      value = Code.get(value.id)
+    } else {
+      throw Error('Unknown Code Defination')
+    }
+
+    return value
+  },
+
+  rejectOf: (id: number): ICode.CodeEntry => {
     const reqCode = CodeDict.get(id)
     const resCodeId = reqCode.reject || reqCode.default
 
-    return CodeDict.get(resCodeId).id
+    return CodeDict.get(resCodeId)
   },
 
-  acceptOf: (id: number): number => {
+  acceptOf: (id: number): ICode.CodeEntry => {
     const reqCode = CodeDict.get(id)
     const resCodeId = reqCode.accept || reqCode.default
 
-    return CodeDict.get(resCodeId).id
+    return CodeDict.get(resCodeId)
   },
 
   canResponseWith: (reqCodeId: number, resCodeId: number): boolean => {

@@ -19,7 +19,6 @@ const codes = [
 ];
 const CodeDict = new Map();
 codes.forEach(value => {
-    value.eventName = value.name.replace('-Request', '');
     CodeDict.set(value.id, value);
     CodeDict.set(value.name, value);
 });
@@ -27,15 +26,27 @@ const Code = {
     get: (value) => {
         return CodeDict.get(value);
     },
+    validate: (value) => {
+        if (Number.isInteger(value) || typeof value === 'string') {
+            value = Code.get(value);
+        }
+        else if (value.id) {
+            value = Code.get(value.id);
+        }
+        else {
+            throw Error('Unknown Code Defination');
+        }
+        return value;
+    },
     rejectOf: (id) => {
         const reqCode = CodeDict.get(id);
         const resCodeId = reqCode.reject || reqCode.default;
-        return CodeDict.get(resCodeId).id;
+        return CodeDict.get(resCodeId);
     },
     acceptOf: (id) => {
         const reqCode = CodeDict.get(id);
         const resCodeId = reqCode.accept || reqCode.default;
-        return CodeDict.get(resCodeId).id;
+        return CodeDict.get(resCodeId);
     },
     canResponseWith: (reqCodeId, resCodeId) => {
         const reqCode = CodeDict.get(reqCodeId);
