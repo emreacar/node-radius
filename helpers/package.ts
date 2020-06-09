@@ -1,5 +1,5 @@
 import { ICode } from './../types'
-import crypto from 'crypto'
+import crypto, { HexBase64Latin1Encoding } from 'crypto'
 import { getSock } from './listen'
 import { debug } from './logger'
 import Attributes from './attributes'
@@ -113,11 +113,12 @@ export default class Package {
     offset = BufferData.writeUInt16BE(0, offset)
 
     const authenticator_offset = offset
+    console.log('ORIGIN AUTH :' + authenticator_offset, this.authenticator)
     this.authenticator.copy(BufferData, offset)
     offset += 16 //Because Authenticator Length is 16
 
     const attrBuffer = Attributes.encodeList(this.responseAttr)
-    if (attrBuffer.length > 0) attrBuffer.copy(BufferData, offset)
+    attrBuffer.copy(BufferData, offset)
 
     offset += attrBuffer.length
 
@@ -126,13 +127,13 @@ export default class Package {
     BufferData = BufferData.slice(0, packageLength)
 
     // restore Authentication
-    const hash = crypto
-      .createHash('md5')
-      .update(BufferData)
-      .update(this.client.secret)
-      .digest('binary' as any)
+    console.log('CLIENT', this.client.secret)
+    const hash = crypto.createHash('md5').update(BufferData).update(this.client.secret)
 
-    const AuthenticationBuffer = Buffer.from(hash, 'binary')
+    const AuthenticationBuffer = Buffer.from(
+      hash.digest('binary' as HexBase64Latin1Encoding),
+      'binary'
+    )
     AuthenticationBuffer.copy(BufferData, authenticator_offset)
 
     return BufferData
