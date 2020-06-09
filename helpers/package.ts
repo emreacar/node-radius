@@ -117,7 +117,7 @@ export default class Package {
     offset += 16 //Because Authenticator Length is 16
 
     const attrBuffer = Attributes.encodeList(this.responseAttr)
-    attrBuffer.copy(BufferData, offset)
+    if (attrBuffer.length > 0) attrBuffer.copy(BufferData, offset)
 
     offset += attrBuffer.length
 
