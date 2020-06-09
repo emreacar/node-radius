@@ -80,6 +80,7 @@ class Package {
         const length_offset = offset;
         offset = BufferData.writeUInt16BE(0, offset);
         const authenticator_offset = offset;
+        console.log('ORIGIN AUTH :' + authenticator_offset, this.authenticator);
         this.authenticator.copy(BufferData, offset);
         offset += 16;
         const attrBuffer = attributes_1.default.encodeList(this.responseAttr);
@@ -88,12 +89,9 @@ class Package {
         const packageLength = offset;
         BufferData.writeUInt16BE(packageLength, length_offset);
         BufferData = BufferData.slice(0, packageLength);
-        const hash = crypto_1.default
-            .createHash('md5')
-            .update(BufferData)
-            .update(this.client.secret)
-            .digest('binary');
-        const AuthenticationBuffer = Buffer.from(hash, 'binary');
+        console.log('CLIENT', this.client.secret);
+        const hash = crypto_1.default.createHash('md5').update(BufferData).update(this.client.secret);
+        const AuthenticationBuffer = Buffer.from(hash.digest('binary'), 'binary');
         AuthenticationBuffer.copy(BufferData, authenticator_offset);
         return BufferData;
     }
