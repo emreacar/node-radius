@@ -113,7 +113,6 @@ export default class Package {
     offset = BufferData.writeUInt16BE(0, offset)
 
     const authenticator_offset = offset
-    console.log('ORIGIN AUTH :' + authenticator_offset, this.authenticator)
     this.authenticator.copy(BufferData, offset)
     offset += 16 //Because Authenticator Length is 16
 
@@ -127,7 +126,6 @@ export default class Package {
     BufferData = BufferData.slice(0, packageLength)
 
     // restore Authentication
-    console.log('CLIENT', this.client.secret)
     const hash = crypto.createHash('md5').update(BufferData).update(this.client.secret)
 
     const AuthenticationBuffer = Buffer.from(
