@@ -1,4 +1,4 @@
-import { Package, Dictionary, logger, listen, eventEmitter } from './helpers'
+import { Package, Dictionary, logger, listen, eventEmitter, code } from './helpers'
 import { RemoteInfo, Socket } from 'dgram'
 import { IRadius, ICommon } from './types'
 
@@ -112,6 +112,19 @@ export default class Radius {
     }
 
     return client || false
+  }
+
+  static create(pCode: string | number) {
+    if (!pCode || !code.get(pCode)) {
+      throw Error(`${pCode} is unknown`)
+    }
+
+    const identifier = Math.floor(Math.random() * 256)
+    const authenticator = Buffer.alloc(16)
+
+    authenticator.fill(0x00)
+
+    return new Package(pCode, identifier, authenticator)
   }
 
   start() {

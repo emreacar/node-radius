@@ -77,6 +77,15 @@ class Radius {
         }
         return client || false;
     }
+    static create(pCode) {
+        if (!pCode || !helpers_1.code.get(pCode)) {
+            throw Error(`${pCode} is unknown`);
+        }
+        const identifier = Math.floor(Math.random() * 256);
+        const authenticator = Buffer.alloc(16);
+        authenticator.fill(0x00);
+        return new helpers_1.Package(pCode, identifier, authenticator);
+    }
     start() {
         const sockets = ['authorization', 'accounting', 'request'];
         sockets.forEach(type => helpers_1.listen(type, this.options[type + 'Port']));
