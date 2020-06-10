@@ -16,12 +16,15 @@ const Attr = new Map();
 const Vendor = new Map();
 const Locations = [path_1.default.normalize(__dirname + '/../dictionary')];
 exports.get = (id, vendor = -1) => {
+    const altName = id;
     if (typeof id === 'string') {
         id = id
             .replace(/-/g, '')
             .match(/[A-Z][a-z]+/g)
             .join('-');
     }
+    if (Attr.has(altName))
+        id = altName;
     if (!Attr.has(id)) {
         throw new Error(`${id} is unknown attribute`);
     }
