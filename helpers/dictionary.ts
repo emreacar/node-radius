@@ -22,9 +22,9 @@ export const get = (id: number | string, vendor: number = -1): IDictionary.DictE
       .join('-')
   }
 
-  if (!Attr.has(id) && Attr.has(altName)) {
-    id = altName
-  } else if (!Attr.has(id)) {
+  if (Attr.has(altName)) id = altName
+
+  if (!Attr.has(id)) {
     throw new Error(`${id} is unknown attribute`)
   }
 
