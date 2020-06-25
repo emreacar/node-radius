@@ -99,6 +99,8 @@ class Radius {
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
             const response = helpers_1.Package.fromRequest(request);
+            if (client.name === 'atakoy2')
+                console.log(client, request.attr);
             if (!Object.keys(this._handlers).includes(request.code.name)) {
                 throw new Error(`Unknown Request Type for ${request.code.name}`);
             }
