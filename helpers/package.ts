@@ -1,7 +1,7 @@
 import { ICode } from './../types'
 import crypto, { HexBase64Latin1Encoding } from 'crypto'
 import { getSock } from './listen'
-import { debug } from './logger'
+import eventEmitter from './eventEmitter'
 import Attributes from './attributes'
 import Dictionary from './dictionary'
 import Code from './code'
@@ -145,8 +145,12 @@ export default class Package {
     if (!this.code) {
       this.reject()
 
-      debug(`You should define a response code!`)
-      debug(`The request will be responded automatically with the (${this.code}) code.`)
+      eventEmitter.emit('logger', 'debug', 'You should define a response code!')
+      eventEmitter.emit(
+        'logger',
+        'debug',
+        `The request will be responded automatically with the (${this.code}) code.`
+      )
     }
 
     if (this.requestCode) this.checkCode()

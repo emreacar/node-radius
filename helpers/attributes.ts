@@ -1,4 +1,4 @@
-import { debug } from './logger'
+import eventEmitter from './eventEmitter'
 import Dictionary from './dictionary'
 import Crypt from './crypt'
 import { IDictionary } from '../types'
@@ -62,7 +62,7 @@ export default class Attributes {
 
         list[Attributes.stripName(Dict.attr)] = value
       } catch (e) {
-        debug(e)
+        eventEmitter.emit('logger', 'debug', e)
       }
 
       /** whatever pass next attr */

@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { debug } from './logger'
+import eventEmitter from './eventEmitter'
 import { ICommon, IDictionary } from '../types'
 
 const defVendorId: number = -1
@@ -67,7 +67,7 @@ const load = (externalDicts = []) => {
 }
 
 const readFile = dictionaryFile => {
-  debug('dictionaryFile reading:' + dictionaryFile)
+  eventEmitter.emit('logger', 'debug', `dictionaryFile reading: ${dictionaryFile}`)
 
   return fs
     .readFileSync(dictionaryFile, 'ascii')
@@ -132,7 +132,14 @@ const addAttr: ICommon.SpreadableFn = (vendor, attr, id, type, ...flags) => {
   Attr.set(attr, AttrEntry)
   Attr.set(id, AttrEntry)
 
-  debug('Dictionary Attribute Added', Vendor.get(vendor), id, attr)
+  eventEmitter.emit(
+    'logger',
+    'debug',
+    'Dictionary Attribute Added',
+    Vendor.get(vendor),
+    id,
+    attr
+  )
 }
 
 const addAttrValue: ICommon.SpreadableFn = (vendor, attr, value, id) => {
@@ -154,7 +161,7 @@ const addAttrValue: ICommon.SpreadableFn = (vendor, attr, value, id) => {
   id = Number(id)
   Dict.get(attribute.vendor).get(attribute.id).values.set(id, value)
   Dict.get(attribute.vendor).get(attribute.id).values.set(value, id)
-  debug(`${attr} value added:`, value, id)
+  eventEmitter.emit('logger', 'debug', `${attr} value added:`, value, id)
 }
 
 const addVendor: ICommon.SpreadableFn = (name: string, id: number) => {
@@ -167,7 +174,7 @@ const addVendor: ICommon.SpreadableFn = (name: string, id: number) => {
   Vendor.set(id, name)
   Vendor.set(name, id)
   Dict.set(id, new Map())
-  debug('Added Vendor', id, name)
+  eventEmitter.emit('logger', 'debug', 'Vendor Added:', id, name)
 }
 
 const changeVendor: ICommon.SpreadableFn = (name: String) => {

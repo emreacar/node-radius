@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("./../types");
 const crypto_1 = __importDefault(require("crypto"));
 const listen_1 = require("./listen");
-const logger_1 = require("./logger");
+const eventEmitter_1 = __importDefault(require("./eventEmitter"));
 const attributes_1 = __importDefault(require("./attributes"));
 const dictionary_1 = __importDefault(require("./dictionary"));
 const code_1 = __importDefault(require("./code"));
@@ -99,8 +99,8 @@ class Package {
     send() {
         if (!this.code) {
             this.reject();
-            logger_1.debug(`You should define a response code!`);
-            logger_1.debug(`The request will be responded automatically with the (${this.code}) code.`);
+            eventEmitter_1.default.emit('logger', 'debug', 'You should define a response code!');
+            eventEmitter_1.default.emit('logger', 'debug', `The request will be responded automatically with the (${this.code}) code.`);
         }
         if (this.requestCode)
             this.checkCode();

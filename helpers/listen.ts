@@ -1,6 +1,5 @@
 import { createSocket, Socket } from 'dgram'
 import eventEmitter from './eventEmitter'
-import { info } from './logger'
 import { IHelpers } from '../types'
 
 const activeListeners = {}
@@ -11,13 +10,17 @@ export const listen: IHelpers.Listener<Socket> = (type, targetPort) => {
   socket.on('error', err => {
     socket.close()
 
-    eventEmitter.emit('error', `Socket Error: on ${type} socket \n${err.message}`)
+    eventEmitter.emit(
+      'logger',
+      'error',
+      `Socket Error: on ${type} socket \n${err.message}`
+    )
   })
 
   socket.on('listening', () => {
     const { address, port } = socket.address()
 
-    info(`${type} socket started on ${address}:${port}`)
+    eventEmitter.emit('logger', 'info', `${type} socket started on ${address}:${port}`)
   })
 
   socket.on('message', (buffer, rinfo) => {
@@ -25,7 +28,6 @@ export const listen: IHelpers.Listener<Socket> = (type, targetPort) => {
   })
 
   socket.bind(targetPort)
-
   activeListeners[type] = socket
 
   return socket

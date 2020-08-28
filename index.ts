@@ -1,4 +1,4 @@
-import { Package, Dictionary, logger, listen, eventEmitter, code } from './helpers'
+import { Package, Dictionary, listen, eventEmitter, code } from './helpers'
 import { RemoteInfo, Socket } from 'dgram'
 import { IRadius, ICommon } from './types'
 
@@ -13,13 +13,17 @@ export default class Radius {
       accountingPort: 1813,
       requestPort: 16379,
       dictionary: [],
+      logging: ['error', 'info', 'debug'],
+      customDebugUser: [],
       ...customOptions
     }
 
     /** Default EventEmitters */
-    eventEmitter.on('error', error => {
-      logger.error('Error On Init:', error)
-      process.exit(0)
+    eventEmitter.on('logger', (type, ...messages) => {
+      if (this.options.logging.indexOf(type) !== -1) {
+        console.log(type, ...messages)
+        if (type === 'error') process.exit(0)
+      }
     })
 
     eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
@@ -31,7 +35,7 @@ export default class Radius {
     if (authorizationPort === accountingPort) {
       const message = 'Auhotization and Accounting Ports must be different.'
 
-      eventEmitter.emit('error', message)
+      eventEmitter.emit('logger', 'error', message)
     }
     /**
      * @TODO Create metod for load
@@ -58,6 +62,7 @@ export default class Radius {
     clients.forEach(client => {
       if (typeof client.ip !== 'string') {
         eventEmitter.emit(
+          'logger',
           'error',
           `Client IP Must be String, ${typeof client.ip} given in.`
         )
@@ -73,7 +78,7 @@ export default class Radius {
 
   use(eventName: string | ICommon.Middleware, middleware: ICommon.Middleware = () => {}) {
     if (typeof middleware !== 'function') {
-      eventEmitter.emit('error', 'Middleware must be a function!')
+      eventEmitter.emit('logger', 'error', 'Middleware must be a function!')
       process.exit(0)
     }
 
@@ -95,6 +100,7 @@ export default class Radius {
       this._handlers[eventName as PropertyKey].push(middleware)
     } else {
       eventEmitter.emit(
+        'logger',
         'error',
         `Unknown listener for ${eventName}. Use only one of theese: ${keys}`
       )
@@ -138,10 +144,12 @@ export default class Radius {
       const client = this.setClient(rinfo, socket)
 
       if (!client) {
-        logger.debug(
-          rinfo.address,
-          `There is no client in known clients. Connection terminated`
+        eventEmitter.emit(
+          'logger',
+          'debug',
+          `${rinfo.address}: There is no client in known clients. Connection terminated`
         )
+
         return
       }
 
@@ -160,7 +168,7 @@ export default class Radius {
 
       await next()
     } catch (e) {
-      logger.debug('Incoming Message Error:', e)
+      eventEmitter.emit('logger', 'debug', `Incoming Msg Err: ${e}`)
       return
     }
   }

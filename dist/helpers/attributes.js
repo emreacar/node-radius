@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const logger_1 = require("./logger");
+const eventEmitter_1 = __importDefault(require("./eventEmitter"));
 const dictionary_1 = __importDefault(require("./dictionary"));
 const crypt_1 = __importDefault(require("./crypt"));
 require("../types");
@@ -54,7 +54,7 @@ class Attributes {
                 list[Attributes.stripName(Dict.attr)] = value;
             }
             catch (e) {
-                logger_1.debug(e);
+                eventEmitter_1.default.emit('logger', 'debug', e);
             }
             buffer = buffer.slice(lengthAttr);
         }

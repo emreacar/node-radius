@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.get = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const logger_1 = require("./logger");
+const eventEmitter_1 = __importDefault(require("./eventEmitter"));
 require("../types");
 const defVendorId = -1;
 const defVendorName = 'Default';
@@ -61,7 +61,7 @@ const load = (externalDicts = []) => {
     });
 };
 const readFile = dictionaryFile => {
-    logger_1.debug('dictionaryFile reading:' + dictionaryFile);
+    eventEmitter_1.default.emit('logger', 'debug', `dictionaryFile reading: ${dictionaryFile}`);
     return fs_1.default
         .readFileSync(dictionaryFile, 'ascii')
         .split(/\r?\n/)
@@ -113,7 +113,7 @@ const addAttr = (vendor, attr, id, type, ...flags) => {
     Dict.get(vendor).set(id, DictEntry);
     Attr.set(attr, AttrEntry);
     Attr.set(id, AttrEntry);
-    logger_1.debug('Dictionary Attribute Added', Vendor.get(vendor), id, attr);
+    eventEmitter_1.default.emit('logger', 'debug', 'Dictionary Attribute Added', Vendor.get(vendor), id, attr);
 };
 const addAttrValue = (vendor, attr, value, id) => {
     if (!Dict.has(vendor)) {
@@ -129,7 +129,7 @@ const addAttrValue = (vendor, attr, value, id) => {
     id = Number(id);
     Dict.get(attribute.vendor).get(attribute.id).values.set(id, value);
     Dict.get(attribute.vendor).get(attribute.id).values.set(value, id);
-    logger_1.debug(`${attr} value added:`, value, id);
+    eventEmitter_1.default.emit('logger', 'debug', `${attr} value added:`, value, id);
 };
 const addVendor = (name, id) => {
     id = Number(id);
@@ -139,7 +139,7 @@ const addVendor = (name, id) => {
     Vendor.set(id, name);
     Vendor.set(name, id);
     Dict.set(id, new Map());
-    logger_1.debug('Added Vendor', id, name);
+    eventEmitter_1.default.emit('logger', 'debug', 'Vendor Added:', id, name);
 };
 const changeVendor = (name) => {
     if (!Vendor.has(name)) {

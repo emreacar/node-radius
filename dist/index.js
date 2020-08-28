@@ -10,11 +10,16 @@ class Radius {
             accountingPort: 1813,
             requestPort: 16379,
             dictionary: [],
+            logging: ['error', 'info', 'debug'],
+            customDebugUser: [],
             ...customOptions
         };
-        helpers_1.eventEmitter.on('error', error => {
-            helpers_1.logger.error('Error On Init:', error);
-            process.exit(0);
+        helpers_1.eventEmitter.on('logger', (type, ...messages) => {
+            if (this.options.logging.indexOf(type) !== -1) {
+                console.log(type, ...messages);
+                if (type === 'error')
+                    process.exit(0);
+            }
         });
         helpers_1.eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
             this.handleIncoming(socket, buffer, rinfo);
@@ -22,7 +27,7 @@ class Radius {
         const { authorizationPort, accountingPort } = this.options;
         if (authorizationPort === accountingPort) {
             const message = 'Auhotization and Accounting Ports must be different.';
-            helpers_1.eventEmitter.emit('error', message);
+            helpers_1.eventEmitter.emit('logger', 'error', message);
         }
         helpers_1.Dictionary.load(this.options.dictionary);
         this._clients = new Map();
@@ -38,7 +43,7 @@ class Radius {
     addClient(...clients) {
         clients.forEach(client => {
             if (typeof client.ip !== 'string') {
-                helpers_1.eventEmitter.emit('error', `Client IP Must be String, ${typeof client.ip} given in.`);
+                helpers_1.eventEmitter.emit('logger', 'error', `Client IP Must be String, ${typeof client.ip} given in.`);
             }
             this._clients.set(client.ip, client);
         });
@@ -48,7 +53,7 @@ class Radius {
     }
     use(eventName, middleware = () => { }) {
         if (typeof middleware !== 'function') {
-            helpers_1.eventEmitter.emit('error', 'Middleware must be a function!');
+            helpers_1.eventEmitter.emit('logger', 'error', 'Middleware must be a function!');
             process.exit(0);
         }
         const keys = Object.keys(this._handlers);
@@ -65,7 +70,7 @@ class Radius {
             this._handlers[eventName].push(middleware);
         }
         else {
-            helpers_1.eventEmitter.emit('error', `Unknown listener for ${eventName}. Use only one of theese: ${keys}`);
+            helpers_1.eventEmitter.emit('logger', 'error', `Unknown listener for ${eventName}. Use only one of theese: ${keys}`);
             process.exit(0);
         }
     }
@@ -94,7 +99,7 @@ class Radius {
         try {
             const client = this.setClient(rinfo, socket);
             if (!client) {
-                helpers_1.logger.debug(rinfo.address, `There is no client in known clients. Connection terminated`);
+                helpers_1.eventEmitter.emit('logger', 'debug', `${rinfo.address}: There is no client in known clients. Connection terminated`);
                 return;
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
@@ -110,7 +115,7 @@ class Radius {
             await next();
         }
         catch (e) {
-            helpers_1.logger.debug('Incoming Message Error:', e);
+            helpers_1.eventEmitter.emit('logger', 'debug', `Incoming Msg Err: ${e}`);
             return;
         }
     }

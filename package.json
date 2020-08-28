@@ -1,7 +1,7 @@
 {
   "name": "node-radius",
   "version": "1.0.0",
-  "description": "NodeJS Radius Service For Nas Communication (Priority of Mikrotik) ",
+  "description": "NodeJS Radius Service For Nas Communication",
   "contributors": [
     {
       "name": "Emre Acar",
