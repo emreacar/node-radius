@@ -103,10 +103,10 @@ class Radius {
                 return;
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
-            const response = helpers_1.Package.fromRequest(request);
             if (!Object.keys(this._handlers).includes(request.code.name)) {
                 throw new Error(`Unknown Request Type for ${request.code.name}`);
             }
+            const response = helpers_1.Package.fromRequest(request);
             const middlewares = [...this._handlers[request.code.name]];
             const next = async () => {
                 if (middlewares.length)
