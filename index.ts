@@ -154,12 +154,12 @@ export default class Radius {
       }
 
       const request = Package.fromBuffer(buffer, client)
-      const response = Package.fromRequest(request)
 
       if (!Object.keys(this._handlers).includes(request.code.name)) {
         throw new Error(`Unknown Request Type for ${request.code.name}`)
       }
 
+      const response = Package.fromRequest(request)
       const middlewares = [...this._handlers[request.code.name]]
 
       const next = async () => {
