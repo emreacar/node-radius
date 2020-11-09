@@ -107,10 +107,12 @@ class Package {
         if (Object.keys(this.client).length === 0) {
             throw new Error('You must select a client to be able to send packages.');
         }
-        const { secret, ...customClientMesg } = this.client;
-        eventEmitter_1.default.emit('logger', 'response', {
-            code: { ...this.code },
-            client: { ...customClientMesg },
+        eventEmitter_1.default.emit('logger', 'info', {
+            code: this.code.name,
+            client: {
+                ip: this.client.ip,
+                host: this.client.name
+            },
             body: { ...this.responseAttr }
         });
         const responsePacket = this.toBuffer();

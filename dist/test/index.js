@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = __importDefault(require("../index"));
+require("../index");
 const http_1 = __importDefault(require("http"));
 const dictionary = [
     './test/dictionary/dictionary.cisco',
@@ -23,12 +24,12 @@ const clients = [
 ];
 const server = new index_1.default({
     dictionary: dictionary,
-    logging: ['info', 'error', 'debug']
+    logging: ['info', 'error', 'debug', 'request', 'response']
 });
 server.addClient(...clients);
 server.use('Access-Request', (req, res) => {
-    res.add('Framed-IP-Addresss', '192.168.1.1');
-    res.reject(true);
+    res.add('Framed-IP-Address', '192.168.1.1');
+    res.accept(true);
 });
 server.use('Accounting-Request', (req, res) => {
     res.accept(true);

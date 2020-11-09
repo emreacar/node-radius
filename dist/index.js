@@ -98,10 +98,12 @@ class Radius {
                 return;
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
-            const { secret, ...customClientMesg } = request.client;
-            helpers_1.eventEmitter.emit('logger', 'request', {
-                code: { ...request.code },
-                client: { ...customClientMesg },
+            helpers_1.eventEmitter.emit('logger', 'info', {
+                code: request.code.name,
+                client: {
+                    ip: request.client.ip,
+                    host: request.client.name
+                },
                 body: { ...request.attr }
             });
             if (!Object.keys(this._handlers).includes(request.code.name)) {

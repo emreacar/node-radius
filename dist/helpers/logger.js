@@ -4,23 +4,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = void 0;
-const winston_1 = require("winston");
+const graylog2_1 = __importDefault(require("graylog2"));
 const config_1 = __importDefault(require("./config"));
-const { combine, timestamp, json } = winston_1.format;
-const levels = {
-    error: 0,
-    info: 1,
-    request: 2,
-    response: 3,
-    debug: 4
-};
-const winLogger = winston_1.createLogger({
-    levels,
-    level: config_1.default.get('logLevel'),
-    format: combine(timestamp(), json()),
-    defaultMeta: { service: 'radius' },
-    transports: [new winston_1.transports.File({ filename: config_1.default.get('logFilename') })]
+const logOpt = config_1.default.get('logger');
+const gLogger = new graylog2_1.default.graylog({
+    servers: [{ host: logOpt.host, port: parseInt(logOpt.port) }],
+    hostname: 'node-radius',
+    facility: 'Radius'
 });
-exports.Logger = params => winLogger.log(params);
+gLogger.on('error', function (error) {
+    console.error('Error while trying to write to graylog2:', error);
+});
+exports.Logger = params => {
+    gLogger.log(params);
+};
 exports.default = exports.Logger;
 //# sourceMappingURL=logger.js.map

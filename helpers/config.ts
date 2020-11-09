@@ -12,8 +12,10 @@ const config: IRadius.Options = {
     request: 1,
     response: 1
   },
-  logLevel: 'debug',
-  logFilename: 'logs/combined.log'
+  logger: {
+    host: '',
+    port: 0
+  }
 }
 
 export const ConfigMan = {
