@@ -27,10 +27,11 @@ const server = new index_1.default({
 });
 server.addClient(...clients);
 server.use('Access-Request', (req, res) => {
-    return;
+    res.add('Framed-IP-Addresss', '192.168.1.1');
+    res.reject(true);
 });
 server.use('Accounting-Request', (req, res) => {
-    return;
+    res.accept(true);
 });
 server.start();
 http_1.default

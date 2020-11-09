@@ -15,6 +15,8 @@ var code_1 = require("./code");
 Object.defineProperty(exports, "code", { enumerable: true, get: function () { return code_1.default; } });
 var logger_1 = require("./logger");
 Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return logger_1.default; } });
+var config_1 = require("./config");
+Object.defineProperty(exports, "ConfigMan", { enumerable: true, get: function () { return config_1.default; } });
 var package_1 = require("./package");
 Object.defineProperty(exports, "Package", { enumerable: true, get: function () { return package_1.default; } });
 var dictionary_1 = require("./dictionary");

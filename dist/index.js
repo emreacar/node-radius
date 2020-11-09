@@ -5,19 +5,12 @@ const helpers_1 = require("./helpers");
 require("./types");
 class Radius {
     constructor(customOptions = {}) {
-        this.options = {
-            authorizationPort: 1812,
-            accountingPort: 1813,
-            requestPort: 16379,
-            dictionary: [],
-            logLevels: ['error', 'info', 'debug', 'request', 'response'],
-            logDir: 'logs/',
-            ...customOptions
-        };
+        this.options = helpers_1.ConfigMan.init(customOptions);
         helpers_1.eventEmitter.on('logger', (type, ...messages) => {
-            if (this.options.logLevels.indexOf(type) === -1)
-                return;
-            helpers_1.Logger({ level: type, message: messages });
+            if (Object.keys(this.options.logLevels).includes(type) &&
+                this.options.logLevels[type] === 1) {
+                helpers_1.Logger({ level: type, message: messages });
+            }
         });
         helpers_1.eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
             this.handleIncoming(socket, buffer, rinfo);
@@ -99,7 +92,11 @@ class Radius {
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
             const { secret, ...customClientMesg } = request.client;
-            helpers_1.eventEmitter.emit('logger', 'request', { ...request.code }, { ...customClientMesg }, { ...request.attr });
+            helpers_1.eventEmitter.emit('logger', 'request', {
+                code: { ...request.code },
+                client: { ...customClientMesg },
+                body: { ...request.attr }
+            });
             if (!Object.keys(this._handlers).includes(request.code.name)) {
                 throw new Error(`Unknown Request Type for ${request.code.name}, from ${rinfo.address}`);
             }
@@ -112,7 +109,9 @@ class Radius {
             await next();
         }
         catch (e) {
-            helpers_1.eventEmitter.emit('logger', 'debug', `${e}`);
+            helpers_1.eventEmitter.emit('logger', 'debug', {
+                body: e.message
+            });
             return;
         }
     }
