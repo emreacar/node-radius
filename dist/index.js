@@ -1,8 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RLogger = void 0;
 require("dgram");
 const helpers_1 = require("./helpers");
 require("./types");
+exports.RLogger = (level, message) => {
+    if (Object.keys(helpers_1.ConfigMan.get('logLevels')).includes(level) &&
+        helpers_1.ConfigMan.get('logLevels')[level] === 1) {
+        helpers_1.Logger({ level, message });
+    }
+};
 class Radius {
     constructor(customOptions = {}) {
         this.options = helpers_1.ConfigMan.init(customOptions);

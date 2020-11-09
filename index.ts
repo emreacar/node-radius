@@ -10,6 +10,15 @@ import {
 } from './helpers'
 import { IRadius, ICommon } from './types'
 
+export const RLogger = (level, message) => {
+  if (
+    Object.keys(ConfigMan.get('logLevels')).includes(level) &&
+    ConfigMan.get('logLevels')[level] === 1
+  ) {
+    Logger({ level, message })
+  }
+}
+
 export default class Radius {
   options: IRadius.Options
   _clients: any

@@ -1,4 +1,5 @@
 import Radius from '../index'
+import { RLogger } from '../index'
 import http from 'http'
 
 const dictionary = [
