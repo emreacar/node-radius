@@ -9,8 +9,8 @@ require("./config");
 const gLogger = new graylog2_1.default.graylog({
     servers: [
         {
-            host: process.env.LOGGER_HOST || 'localhost',
-            port: process.env.LOGGER_PORT || 49514
+            host: 'nglog.turancoskun.com',
+            port: 49514
         }
     ],
     hostname: 'node-radius',
