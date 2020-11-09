@@ -3,10 +3,6 @@ export declare namespace IRadius {
     authorizationPort: number
     accountingPort: number
     dictionary: []
-    logger: {
-      host: string
-      port: number
-    }
     [key: string]: any
   }
 

@@ -1,12 +1,12 @@
 import { RemoteInfo, Socket } from 'dgram'
 import {
+  ConfigMan,
   Package,
   Dictionary,
   listen,
   eventEmitter,
   code,
-  Logger,
-  ConfigMan
+  Logger
 } from './helpers'
 import { IRadius, ICommon } from './types'
 

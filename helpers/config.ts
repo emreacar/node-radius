@@ -11,10 +11,6 @@ const config: IRadius.Options = {
     debug: 1,
     request: 1,
     response: 1
-  },
-  logger: {
-    host: '',
-    port: 0
   }
 }
 

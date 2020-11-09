@@ -22,7 +22,7 @@ const clients = [
 
 const server = new Radius({
   dictionary: dictionary,
-  logging: ['info', 'error', 'debug', 'request', 'response']
+  logging: ['info', 'error', 'debug']
 })
 server.addClient(...clients)
 

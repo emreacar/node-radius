@@ -1,10 +1,13 @@
 import graylog2 from 'graylog2'
 import ConfigMan from './config'
 
-const logOpt = ConfigMan.get('logger')
-
 const gLogger = new graylog2.graylog({
-  servers: [{ host: logOpt.host, port: parseInt(logOpt.port) }],
+  servers: [
+    {
+      host: process.env.LOGGER_HOST || 'localhost',
+      port: process.env.LOGGER_PORT || 49514
+    }
+  ],
   hostname: 'node-radius',
   facility: 'Radius'
 })
