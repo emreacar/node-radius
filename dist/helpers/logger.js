@@ -5,10 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = void 0;
 const graylog2_1 = __importDefault(require("graylog2"));
-const config_1 = __importDefault(require("./config"));
-const logOpt = config_1.default.get('logger');
+require("./config");
 const gLogger = new graylog2_1.default.graylog({
-    servers: [{ host: logOpt.host, port: parseInt(logOpt.port) }],
+    servers: [
+        {
+            host: process.env.LOGGER_HOST || 'localhost',
+            port: process.env.LOGGER_PORT || 49514
+        }
+    ],
     hostname: 'node-radius',
     facility: 'Radius'
 });

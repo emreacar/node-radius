@@ -24,7 +24,7 @@ const clients = [
 ];
 const server = new index_1.default({
     dictionary: dictionary,
-    logging: ['info', 'error', 'debug', 'request', 'response']
+    logging: ['info', 'error', 'debug']
 });
 server.addClient(...clients);
 server.use('Access-Request', (req, res) => {
