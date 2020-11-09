@@ -1,5 +1,7 @@
 export * from './listen'
 export { default as code } from './code'
+export { default as Logger } from './logger'
+export { default as ConfigMan } from './config'
 export { default as Package } from './package'
 export { default as Dictionary } from './dictionary'
 export { default as eventEmitter } from './eventEmitter'

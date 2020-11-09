@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const helpers_1 = require("./helpers");
 require("dgram");
+const helpers_1 = require("./helpers");
 require("./types");
 class Radius {
     constructor(customOptions = {}) {
@@ -10,24 +10,21 @@ class Radius {
             accountingPort: 1813,
             requestPort: 16379,
             dictionary: [],
-            logging: ['error', 'info', 'debug'],
-            customDebugUser: [],
+            logLevels: ['error', 'info', 'debug', 'request', 'response'],
+            logDir: 'logs/',
             ...customOptions
         };
         helpers_1.eventEmitter.on('logger', (type, ...messages) => {
-            if (this.options.logging.indexOf(type) !== -1) {
-                console.log(type, ...messages);
-                if (type === 'error')
-                    process.exit(0);
-            }
+            if (this.options.logLevels.indexOf(type) === -1)
+                return;
+            helpers_1.Logger({ level: type, message: messages });
         });
         helpers_1.eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
             this.handleIncoming(socket, buffer, rinfo);
         });
         const { authorizationPort, accountingPort } = this.options;
         if (authorizationPort === accountingPort) {
-            const message = 'Auhotization and Accounting Ports must be different.';
-            helpers_1.eventEmitter.emit('logger', 'error', message);
+            helpers_1.eventEmitter.emit('logger', 'error', 'Auhotization and Accounting Ports must be different.');
         }
         helpers_1.Dictionary.load(this.options.dictionary);
         this._clients = new Map();
@@ -54,7 +51,6 @@ class Radius {
     use(eventName, middleware = () => { }) {
         if (typeof middleware !== 'function') {
             helpers_1.eventEmitter.emit('logger', 'error', 'Middleware must be a function!');
-            process.exit(0);
         }
         const keys = Object.keys(this._handlers);
         if (typeof eventName === 'function') {
@@ -71,7 +67,6 @@ class Radius {
         }
         else {
             helpers_1.eventEmitter.emit('logger', 'error', `Unknown listener for ${eventName}. Use only one of theese: ${keys}`);
-            process.exit(0);
         }
     }
     setClient({ address, ...connection }, socket) {
@@ -103,8 +98,10 @@ class Radius {
                 return;
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
+            const { secret, ...customClientMesg } = request.client;
+            helpers_1.eventEmitter.emit('logger', 'request', { ...request.code }, { ...customClientMesg }, { ...request.attr });
             if (!Object.keys(this._handlers).includes(request.code.name)) {
-                throw new Error(`Unknown Request Type for ${request.code.name}`);
+                throw new Error(`Unknown Request Type for ${request.code.name}, from ${rinfo.address}`);
             }
             const response = helpers_1.Package.fromRequest(request);
             const middlewares = [...this._handlers[request.code.name]];
@@ -115,7 +112,7 @@ class Radius {
             await next();
         }
         catch (e) {
-            helpers_1.eventEmitter.emit('logger', 'debug', `Incoming Msg Err: ${e}`);
+            helpers_1.eventEmitter.emit('logger', 'debug', `${e}`);
             return;
         }
     }

@@ -1,5 +1,13 @@
-import { Package, Dictionary, listen, eventEmitter, code } from './helpers'
 import { RemoteInfo, Socket } from 'dgram'
+import {
+  Package,
+  Dictionary,
+  listen,
+  eventEmitter,
+  code,
+  Logger,
+  ConfigMan
+} from './helpers'
 import { IRadius, ICommon } from './types'
 
 export default class Radius {
@@ -8,21 +16,14 @@ export default class Radius {
   _handlers: any
 
   constructor(customOptions = {}) {
-    this.options = {
-      authorizationPort: 1812,
-      accountingPort: 1813,
-      requestPort: 16379,
-      dictionary: [],
-      logging: ['error', 'info', 'debug'],
-      customDebugUser: [],
-      ...customOptions
-    }
-
+    this.options = ConfigMan.init(customOptions)
     /** Default EventEmitters */
     eventEmitter.on('logger', (type, ...messages) => {
-      if (this.options.logging.indexOf(type) !== -1) {
-        console.log(type, ...messages)
-        if (type === 'error') process.exit(0)
+      if (
+        Object.keys(this.options.logLevels).includes(type) &&
+        this.options.logLevels[type] === 1
+      ) {
+        Logger({ level: type, message: messages })
       }
     })
 
@@ -33,9 +34,11 @@ export default class Radius {
     const { authorizationPort, accountingPort } = this.options
 
     if (authorizationPort === accountingPort) {
-      const message = 'Auhotization and Accounting Ports must be different.'
-
-      eventEmitter.emit('logger', 'error', message)
+      eventEmitter.emit(
+        'logger',
+        'error',
+        'Auhotization and Accounting Ports must be different.'
+      )
     }
     /**
      * @TODO Create metod for load
@@ -43,6 +46,9 @@ export default class Radius {
     Dictionary.load(this.options.dictionary)
 
     this._clients = new Map()
+    /**
+     * @TODO Add Access-Challenge Request
+     */
     this._handlers = {
       'Access-Request': [],
       'Accounting-Request': [],
@@ -79,7 +85,6 @@ export default class Radius {
   use(eventName: string | ICommon.Middleware, middleware: ICommon.Middleware = () => {}) {
     if (typeof middleware !== 'function') {
       eventEmitter.emit('logger', 'error', 'Middleware must be a function!')
-      process.exit(0)
     }
 
     const keys = Object.keys(this._handlers)
@@ -104,8 +109,6 @@ export default class Radius {
         'error',
         `Unknown listener for ${eventName}. Use only one of theese: ${keys}`
       )
-
-      process.exit(0)
     }
   }
 
@@ -155,8 +158,19 @@ export default class Radius {
 
       const request = Package.fromBuffer(buffer, client)
 
+      /** @description Hide Secret Data from logs */
+
+      const { secret, ...customClientMesg } = request.client
+      eventEmitter.emit('logger', 'request', {
+        code: { ...request.code },
+        client: { ...customClientMesg },
+        body: { ...request.attr }
+      })
+
       if (!Object.keys(this._handlers).includes(request.code.name)) {
-        throw new Error(`Unknown Request Type for ${request.code.name}`)
+        throw new Error(
+          `Unknown Request Type for ${request.code.name}, from ${rinfo.address}`
+        )
       }
 
       const response = Package.fromRequest(request)
@@ -168,7 +182,9 @@ export default class Radius {
 
       await next()
     } catch (e) {
-      eventEmitter.emit('logger', 'debug', `Incoming Msg Err: ${e}`)
+      eventEmitter.emit('logger', 'debug', {
+        body: e.message
+      })
       return
     }
   }
