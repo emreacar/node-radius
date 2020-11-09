@@ -1,5 +1,4 @@
 import graylog2 from 'graylog2'
-import ConfigMan from './config'
 
 const gLogger = new graylog2.graylog({
   servers: [
