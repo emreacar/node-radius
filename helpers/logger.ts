@@ -1,23 +1,18 @@
-import { createLogger, format, transports } from 'winston'
+import graylog2 from 'graylog2'
 import ConfigMan from './config'
-const { combine, timestamp, json } = format
 
-const levels = {
-  error: 0,
-  info: 1,
-  request: 2,
-  response: 3,
-  debug: 4
-}
-
-const winLogger = createLogger({
-  levels,
-  level: ConfigMan.get('logLevel'),
-  format: combine(timestamp(), json()),
-  defaultMeta: { service: 'radius' },
-  transports: [new transports.File({ filename: ConfigMan.get('logFilename') })]
+const gLogger = new graylog2.graylog({
+  servers: [{ host: 'nglog.turancoskun.com', port: 49514 }],
+  hostname: 'node-radius',
+  facility: 'Radius'
 })
 
-export const Logger = params => winLogger.log(params)
+gLogger.on('error', function (error) {
+  console.error('Error while trying to write to graylog2:', error)
+})
+
+export const Logger = params => {
+  gLogger.log(params)
+}
 
 export default Logger

@@ -167,12 +167,12 @@ export default class Radius {
 
       const request = Package.fromBuffer(buffer, client)
 
-      /** @description Hide Secret Data from logs */
-
-      const { secret, ...customClientMesg } = request.client
-      eventEmitter.emit('logger', 'request', {
-        code: { ...request.code },
-        client: { ...customClientMesg },
+      eventEmitter.emit('logger', 'info', {
+        code: request.code.name,
+        client: {
+          ip: request.client.ip,
+          host: request.client.name
+        },
         body: { ...request.attr }
       })
 

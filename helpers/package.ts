@@ -159,10 +159,12 @@ export default class Package {
       throw new Error('You must select a client to be able to send packages.')
     }
 
-    const { secret, ...customClientMesg } = this.client
-    eventEmitter.emit('logger', 'response', {
-      code: { ...this.code },
-      client: { ...customClientMesg },
+    eventEmitter.emit('logger', 'info', {
+      code: this.code.name,
+      client: {
+        ip: this.client.ip,
+        host: this.client.name
+      },
       body: { ...this.responseAttr }
     })
 

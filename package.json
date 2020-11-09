@@ -34,7 +34,11 @@
     "pretty": "prettier --write --config .prettierrc.js **/*.ts"
   },
   "dependencies": {
+    "@types/winston-syslog": "^2.0.3",
     "debug": "^4.1.1",
+    "graylog2": "^0.2.1",
+    "i": "^0.3.6",
+    "npm": "^6.14.8",
     "winston": "^3.3.3",
     "winston-syslog": "^2.4.4"
   },
