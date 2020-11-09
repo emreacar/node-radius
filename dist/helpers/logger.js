@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = void 0;
 const graylog2_1 = __importDefault(require("graylog2"));
-require("./config");
 const gLogger = new graylog2_1.default.graylog({
     servers: [
         {
