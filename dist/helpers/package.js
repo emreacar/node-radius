@@ -96,6 +96,9 @@ class Package {
     setClient(client) {
         this.client = { ...client };
     }
+    setLogUser(logUser) {
+        this.logUser = logUser;
+    }
     send() {
         if (!this.code) {
             this.reject();
@@ -107,13 +110,16 @@ class Package {
         if (Object.keys(this.client).length === 0) {
             throw new Error('You must select a client to be able to send packages.');
         }
-        eventEmitter_1.default.emit('logger', 'info', {
-            code: this.code.name,
-            client: {
-                ip: this.client.ip,
-                host: this.client.name
-            },
-            body: { ...this.responseAttr }
+        const BodyParams = this.responseAttr.map(attr => {
+            return [attributes_1.default.stripName(attr.attribute.attr), attr.value];
+        });
+        const Body = Object.fromEntries(BodyParams);
+        eventEmitter_1.default.emit('logger', 'packet', {
+            UserName: this.logUser,
+            Code: this.code.name.replace('-', ''),
+            NASIdentifier: this.client.name,
+            NASIPAddress: this.client.ip,
+            Body
         });
         const responsePacket = this.toBuffer();
         const { socket, connection } = this.client;
@@ -141,12 +147,16 @@ class Package {
     }
     static fromRequest(request) {
         const { code, identifier, authenticator, client } = request;
+        const { UserName } = request.attr;
         const resCode = code_1.default.rejectOf(code.id);
         let resCodeId = resCode.id || 0;
         const packet = new Package(resCodeId, identifier, authenticator, client);
         Object.defineProperties(packet, {
             requestCode: {
                 value: code
+            },
+            logUser: {
+                value: UserName
             }
         });
         return packet;

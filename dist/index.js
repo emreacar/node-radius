@@ -9,16 +9,14 @@ exports.RLogger = (level, message) => {
         helpers_1.ConfigMan.get('logLevels')[level] === 1) {
         helpers_1.Logger({ level, message });
     }
+    if (level === 'error') {
+        process.exit();
+    }
 };
 class Radius {
     constructor(customOptions = {}) {
         this.options = helpers_1.ConfigMan.init(customOptions);
-        helpers_1.eventEmitter.on('logger', (type, ...messages) => {
-            if (Object.keys(this.options.logLevels).includes(type) &&
-                this.options.logLevels[type] === 1) {
-                helpers_1.Logger({ level: type, message: messages });
-            }
-        });
+        helpers_1.eventEmitter.on('logger', exports.RLogger);
         helpers_1.eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
             this.handleIncoming(socket, buffer, rinfo);
         });
@@ -77,14 +75,17 @@ class Radius {
         }
         return client || false;
     }
-    static create(pCode) {
+    static create(pCode, pFor) {
         if (!pCode || !helpers_1.code.get(pCode)) {
-            throw Error(`${pCode} is unknown`);
+            throw new Error(`${pCode} is unknown`);
         }
         const identifier = Math.floor(Math.random() * 256);
         const authenticator = Buffer.alloc(16);
         authenticator.fill(0x00);
-        return new helpers_1.Package(pCode, identifier, authenticator);
+        const p = new helpers_1.Package(pCode, identifier, authenticator);
+        if (pFor !== '' && typeof pFor === 'string')
+            p.setLogUser(pFor);
+        return p;
     }
     start() {
         const sockets = ['authorization', 'accounting', 'request'];
@@ -94,17 +95,16 @@ class Radius {
         try {
             const client = this.setClient(rinfo, socket);
             if (!client) {
-                helpers_1.eventEmitter.emit('logger', 'debug', `${rinfo.address}: There is no client in known clients. Connection terminated`);
-                return;
+                throw new Error(`${rinfo.address}: There is no client in known clients. Connection terminated`);
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
-            helpers_1.eventEmitter.emit('logger', 'info', {
-                code: request.code.name,
-                client: {
-                    ip: request.client.ip,
-                    host: request.client.name
-                },
-                body: { ...request.attr }
+            const { UserName, NASIdentifier, UserPassword, NASIPAddress, ...Body } = request.attr;
+            helpers_1.eventEmitter.emit('logger', 'packet', {
+                UserName,
+                Code: request.code.name.replace('-', ''),
+                NASIdentifier,
+                NASIPAddress,
+                Body
             });
             if (!Object.keys(this._handlers).includes(request.code.name)) {
                 throw new Error(`Unknown Request Type for ${request.code.name}, from ${rinfo.address}`);
@@ -118,9 +118,7 @@ class Radius {
             await next();
         }
         catch (e) {
-            helpers_1.eventEmitter.emit('logger', 'debug', {
-                body: e.message
-            });
+            helpers_1.eventEmitter.emit('logger', 'info', e.message);
             return;
         }
     }
