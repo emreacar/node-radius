@@ -16,8 +16,7 @@ gLogger.on('error', function (error) {
 })
 
 export const Logger = params => {
-  console.log(params)
-  // gLogger.log(params)
+  gLogger.log(params)
 }
 
 export default Logger
