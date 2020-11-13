@@ -17,6 +17,10 @@ export const RLogger = (level, message) => {
   ) {
     Logger({ level, message })
   }
+
+  if (level === 'error') {
+    process.exit()
+  }
 }
 
 export default class Radius {
@@ -27,14 +31,7 @@ export default class Radius {
   constructor(customOptions = {}) {
     this.options = ConfigMan.init(customOptions)
     /** Default EventEmitters */
-    eventEmitter.on('logger', (type, ...messages) => {
-      if (
-        Object.keys(this.options.logLevels).includes(type) &&
-        this.options.logLevels[type] === 1
-      ) {
-        Logger({ level: type, message: messages })
-      }
-    })
+    eventEmitter.on('logger', RLogger)
 
     eventEmitter.on('sockMessage', (socket, buffer, rinfo) => {
       this.handleIncoming(socket, buffer, rinfo)
@@ -132,17 +129,20 @@ export default class Radius {
     return client || false
   }
 
-  static create(pCode: string | number) {
+  static create(pCode: string | number, pFor: string) {
     if (!pCode || !code.get(pCode)) {
-      throw Error(`${pCode} is unknown`)
+      throw new Error(`${pCode} is unknown`)
     }
 
     const identifier = Math.floor(Math.random() * 256)
     const authenticator = Buffer.alloc(16)
 
     authenticator.fill(0x00)
+    const p = new Package(pCode, identifier, authenticator)
 
-    return new Package(pCode, identifier, authenticator)
+    if (pFor !== '' && typeof pFor === 'string') p.setLogUser(pFor)
+
+    return p
   }
 
   start() {
@@ -156,24 +156,26 @@ export default class Radius {
       const client = this.setClient(rinfo, socket)
 
       if (!client) {
-        eventEmitter.emit(
-          'logger',
-          'debug',
+        throw new Error(
           `${rinfo.address}: There is no client in known clients. Connection terminated`
         )
-
-        return
       }
 
       const request = Package.fromBuffer(buffer, client)
+      const {
+        UserName,
+        NASIdentifier,
+        UserPassword,
+        NASIPAddress,
+        ...Body
+      } = request.attr
 
-      eventEmitter.emit('logger', 'info', {
-        code: request.code.name,
-        client: {
-          ip: request.client.ip,
-          host: request.client.name
-        },
-        body: { ...request.attr }
+      eventEmitter.emit('logger', 'packet', {
+        UserName,
+        Code: request.code.name.replace('-', ''),
+        NASIdentifier,
+        NASIPAddress,
+        Body
       })
 
       if (!Object.keys(this._handlers).includes(request.code.name)) {
@@ -191,9 +193,7 @@ export default class Radius {
 
       await next()
     } catch (e) {
-      eventEmitter.emit('logger', 'debug', {
-        body: e.message
-      })
+      eventEmitter.emit('logger', 'info', e.message)
       return
     }
   }

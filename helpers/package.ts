@@ -20,16 +20,17 @@ export default class Package {
   client: { [key: string]: any }
   identifier: number
   authenticator: any
-  attr: {}
+  attr: { [key: string]: any }
   responseAttr: [any]
   requestCode: ICode.CodeEntry
+  logUser: String
 
   constructor(
     code = null,
     identifier = null,
     authenticator = null,
     client = {},
-    attr = {}
+    attr = {} as any
   ) {
     code = Code.validate(code)
     identifier = identifierCheck(identifier)
@@ -141,6 +142,10 @@ export default class Package {
     this.client = { ...client }
   }
 
+  setLogUser(logUser) {
+    this.logUser = logUser
+  }
+
   send() {
     if (!this.code) {
       this.reject()
@@ -158,14 +163,17 @@ export default class Package {
     if (Object.keys(this.client).length === 0) {
       throw new Error('You must select a client to be able to send packages.')
     }
+    const BodyParams = this.responseAttr.map(attr => {
+      return [Attributes.stripName(attr.attribute.attr), attr.value]
+    })
 
-    eventEmitter.emit('logger', 'info', {
-      code: this.code.name,
-      client: {
-        ip: this.client.ip,
-        host: this.client.name
-      },
-      body: { ...this.responseAttr }
+    const Body = Object.fromEntries(BodyParams)
+    eventEmitter.emit('logger', 'packet', {
+      UserName: this.logUser,
+      Code: this.code.name.replace('-', ''),
+      NASIdentifier: this.client.name,
+      NASIPAddress: this.client.ip,
+      Body
     })
 
     const responsePacket = this.toBuffer()
@@ -203,7 +211,7 @@ export default class Package {
 
   static fromRequest(request) {
     const { code, identifier, authenticator, client } = request
-
+    const { UserName } = request.attr
     /**
      * Because if the user doesn't define an answer code, we should return a reject answer by default.
      */
@@ -216,6 +224,9 @@ export default class Package {
     Object.defineProperties(packet, {
       requestCode: {
         value: code
+      },
+      logUser: {
+        value: UserName
       }
     })
 

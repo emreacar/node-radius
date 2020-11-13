@@ -8,9 +8,8 @@ const config: IRadius.Options = {
   logLevels: {
     error: 1,
     info: 1,
-    debug: 1,
-    request: 1,
-    response: 1
+    packet: 1,
+    debug: 1
   }
 }
 
