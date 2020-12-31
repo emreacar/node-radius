@@ -1,5 +1,5 @@
 import { ICode } from './../types'
-import crypto, { HexBase64Latin1Encoding } from 'crypto'
+import crypto, { BinaryToTextEncoding } from 'crypto'
 import { getSock } from './listen'
 import eventEmitter from './eventEmitter'
 import Attributes from './attributes'
@@ -130,7 +130,7 @@ export default class Package {
     const hash = crypto.createHash('md5').update(BufferData).update(this.client.secret)
 
     const AuthenticationBuffer = Buffer.from(
-      hash.digest('binary' as HexBase64Latin1Encoding),
+      hash.digest('binary' as BinaryToTextEncoding),
       'binary'
     )
     AuthenticationBuffer.copy(BufferData, authenticator_offset)
