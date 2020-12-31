@@ -19,7 +19,6 @@ gLogger.on('error', function (error) {
     console.error('Error while trying to write to graylog2:', error);
 });
 exports.Logger = params => {
-    console.log(params);
     gLogger.log(params);
 };
 exports.default = exports.Logger;
