@@ -16,6 +16,9 @@ export const RLogger = (level, message) => {
     ConfigMan.get('logLevels')[level] === 1
   ) {
     Logger({ level, message })
+    if (ConfigMan.get('logLevels').console && ConfigMan.get('logLevels').console === 1) {
+      console.log(level, message)
+    }
   }
 
   if (level === 'error') {

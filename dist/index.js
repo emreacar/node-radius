@@ -8,6 +8,9 @@ exports.RLogger = (level, message) => {
     if (Object.keys(helpers_1.ConfigMan.get('logLevels')).includes(level) &&
         helpers_1.ConfigMan.get('logLevels')[level] === 1) {
         helpers_1.Logger({ level, message });
+        if (helpers_1.ConfigMan.get('logLevels').console && helpers_1.ConfigMan.get('logLevels').console === 1) {
+            console.log(level, message);
+        }
     }
     if (level === 'error') {
         process.exit();
