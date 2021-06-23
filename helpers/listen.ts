@@ -13,14 +13,18 @@ export const listen: IHelpers.Listener<Socket> = (type, targetPort) => {
     eventEmitter.emit(
       'logger',
       'error',
-      `Socket Error: on ${type} socket \n${err.message}`
+      `(PID: ${process.pid}) Socket Error: on ${type} socket \n${err.message}`
     )
   })
 
   socket.on('listening', () => {
     const { address, port } = socket.address()
 
-    eventEmitter.emit('logger', 'info', `${type} socket started on ${address}:${port}`)
+    eventEmitter.emit(
+      'logger',
+      'info',
+      `(PID: ${process.pid}) ${type} socket started on ${address}:${port}`
+    )
   })
 
   socket.on('message', (buffer, rinfo) => {

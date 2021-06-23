@@ -157,7 +157,7 @@ export default class Radius {
 
       if (!client) {
         throw new Error(
-          `${rinfo.address}: There is no client in known clients. Connection terminated`
+          `(PID: ${process.pid}) ${rinfo.address}: There is no client in known clients. Connection terminated`
         )
       }
 
@@ -171,6 +171,7 @@ export default class Radius {
       } = request.attr
 
       eventEmitter.emit('logger', 'packet', {
+        PID: process.pid,
         UserName,
         Code: request.code.name.replace('-', ''),
         NASIdentifier,
@@ -180,7 +181,7 @@ export default class Radius {
 
       if (!Object.keys(this._handlers).includes(request.code.name)) {
         throw new Error(
-          `Unknown Request Type for ${request.code.name}, from ${rinfo.address}`
+          `(PID: ${process.pid}) Unknown Request Type for ${request.code.name}, from ${rinfo.address}`
         )
       }
 
