@@ -12,14 +12,6 @@ import { IRadius, ICommon } from './types'
 
 export const RLogger = (level, message) => {
   if (
-    ConfigMan.get('logLevels').console &&
-    ConfigMan.get('logLevels').console === 1 &&
-    level !== 'debug'
-  ) {
-    console.log(level, message)
-  }
-
-  if (
     Object.keys(ConfigMan.get('logLevels')).includes(level) &&
     ConfigMan.get('logLevels')[level] === 1
   ) {

@@ -8,7 +8,6 @@ const config = {
     requestPort: 16379,
     dictionary: [],
     logLevels: {
-        console: 1,
         error: 1,
         info: 1,
         packet: 1,
