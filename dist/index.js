@@ -5,7 +5,9 @@ require("dgram");
 const helpers_1 = require("./helpers");
 require("./types");
 exports.RLogger = (level, message) => {
-    if (helpers_1.ConfigMan.get('logLevels').console && helpers_1.ConfigMan.get('logLevels').console === 1) {
+    if (helpers_1.ConfigMan.get('logLevels').console &&
+        helpers_1.ConfigMan.get('logLevels').console === 1 &&
+        level !== 'debug') {
         console.log(level, message);
     }
     if (Object.keys(helpers_1.ConfigMan.get('logLevels')).includes(level) &&
