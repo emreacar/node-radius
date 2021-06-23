@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = void 0;
 const graylog2_1 = __importDefault(require("graylog2"));
+const os_1 = require("os");
 const gLogger = new graylog2_1.default.graylog({
     servers: [
         {
@@ -12,7 +13,7 @@ const gLogger = new graylog2_1.default.graylog({
             port: 49514
         }
     ],
-    hostname: 'node-radius',
+    hostname: os_1.hostname() || 'node-radius',
     facility: 'Radius'
 });
 gLogger.on('error', function (error) {

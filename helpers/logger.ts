@@ -1,4 +1,5 @@
 import graylog2 from 'graylog2'
+import { hostname } from 'os'
 
 const gLogger = new graylog2.graylog({
   servers: [
@@ -7,7 +8,7 @@ const gLogger = new graylog2.graylog({
       port: 49514
     }
   ],
-  hostname: 'node-radius',
+  hostname: hostname() || 'node-radius',
   facility: 'Radius'
 })
 
