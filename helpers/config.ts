@@ -6,7 +6,7 @@ const config: IRadius.Options = {
   requestPort: 16379,
   dictionary: [],
   logLevels: {
-    console: 0,
+    console: 1,
     error: 1,
     info: 1,
     packet: 1,
