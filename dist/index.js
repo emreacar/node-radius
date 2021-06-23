@@ -95,11 +95,12 @@ class Radius {
         try {
             const client = this.setClient(rinfo, socket);
             if (!client) {
-                throw new Error(`${rinfo.address}: There is no client in known clients. Connection terminated`);
+                throw new Error(`(PID: ${process.pid}) ${rinfo.address}: There is no client in known clients. Connection terminated`);
             }
             const request = helpers_1.Package.fromBuffer(buffer, client);
             const { UserName, NASIdentifier, UserPassword, NASIPAddress, ...Body } = request.attr;
             helpers_1.eventEmitter.emit('logger', 'packet', {
+                PID: process.pid,
                 UserName,
                 Code: request.code.name.replace('-', ''),
                 NASIdentifier,
@@ -107,7 +108,7 @@ class Radius {
                 Body
             });
             if (!Object.keys(this._handlers).includes(request.code.name)) {
-                throw new Error(`Unknown Request Type for ${request.code.name}, from ${rinfo.address}`);
+                throw new Error(`(PID: ${process.pid}) Unknown Request Type for ${request.code.name}, from ${rinfo.address}`);
             }
             const response = helpers_1.Package.fromRequest(request);
             const middlewares = [...this._handlers[request.code.name]];

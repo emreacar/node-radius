@@ -115,6 +115,7 @@ class Package {
         });
         const Body = Object.fromEntries(BodyParams);
         eventEmitter_1.default.emit('logger', 'packet', {
+            PID: process.pid,
             UserName: this.logUser,
             Code: this.code.name.replace('-', ''),
             NASIdentifier: this.client.name,

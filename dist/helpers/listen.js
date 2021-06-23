@@ -12,11 +12,11 @@ exports.listen = (type, targetPort) => {
     const socket = dgram_1.createSocket('udp4');
     socket.on('error', err => {
         socket.close();
-        eventEmitter_1.default.emit('logger', 'error', `Socket Error: on ${type} socket \n${err.message}`);
+        eventEmitter_1.default.emit('logger', 'error', `(PID: ${process.pid}) Socket Error: on ${type} socket \n${err.message}`);
     });
     socket.on('listening', () => {
         const { address, port } = socket.address();
-        eventEmitter_1.default.emit('logger', 'info', `${type} socket started on ${address}:${port}`);
+        eventEmitter_1.default.emit('logger', 'info', `(PID: ${process.pid}) ${type} socket started on ${address}:${port}`);
     });
     socket.on('message', (buffer, rinfo) => {
         eventEmitter_1.default.emit('sockMessage', socket, buffer, rinfo);

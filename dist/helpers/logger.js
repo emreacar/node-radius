@@ -16,7 +16,7 @@ const gLogger = new graylog2_1.default.graylog({
     facility: 'Radius'
 });
 gLogger.on('error', function (error) {
-    console.error('Error while trying to write to graylog2:', error);
+    console.error(`(PID: ${process.pid}) Error while trying to write to graylog2:`, error);
 });
 exports.Logger = params => {
     gLogger.log(params);
