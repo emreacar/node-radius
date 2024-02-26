@@ -4,7 +4,7 @@ import { hostname } from 'os'
 const gLogger = new graylog2.graylog({
   servers: [
     {
-      host: 'nglog.turancoskun.com',
+      host: '',
       port: 49514
     }
   ],
@@ -17,7 +17,8 @@ gLogger.on('error', function (error) {
 })
 
 export const Logger = params => {
-  gLogger.log(params)
+  console.log('LOG', params);
+  // gLogger.log(params)
 }
 
 export default Logger
